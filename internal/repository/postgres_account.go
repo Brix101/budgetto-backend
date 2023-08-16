@@ -1,1 +1,105 @@
 package repository
+
+import (
+	"context"
+
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
+
+	"github.com/Brix101/budgetto-backend/internal/domain"
+)
+
+type postgresAccountRepository struct {
+	conn   Connection
+	tracer trace.Tracer
+}
+
+func NewPostgresAccount(conn Connection) domain.AccountRepository {
+	tracer := otel.Tracer("db:postgres:accounts")
+	return &postgresAccountRepository{conn: conn, tracer: tracer}
+}
+
+func (p *postgresAccountRepository) fetch(ctx context.Context, query string, args ...interface{}) ([]domain.Account, error) {
+	ctx, span := spanWithQuery(ctx, p.tracer, query)
+	defer span.End()
+
+	rows, err := p.conn.Query(ctx, query, args...)
+	if err != nil {
+		span.SetStatus(codes.Error, "failed querying accounts")
+		span.RecordError(err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var accs []domain.Account
+	for rows.Next() {
+		var acc domain.Account
+		if err := rows.Scan(
+			&acc.ID,
+			&acc.Name,
+			&acc.Balance,
+			&acc.Note,
+			&acc.CreatedBy,
+			&acc.CreatedAt,
+			&acc.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		accs = append(accs, acc)
+	}
+	return accs, nil
+}
+
+func (p *postgresAccountRepository) GetByID(ctx context.Context, id int64) (domain.Account, error) {
+	query := `
+		SELECT *
+		FROM accounts
+		WHERE id = $1 AND deleted_at IS NULL`
+
+	accs, err := p.fetch(ctx, query, id)
+	if err != nil {
+		return domain.Account{}, err
+	}
+
+	if len(accs) == 0 {
+		return domain.Account{}, domain.ErrNotFound
+	}
+	return accs[0], nil
+}
+
+func (p *postgresAccountRepository) GetByUser(ctx context.Context, id int64) ([]domain.Account, error) {
+	query := `
+		SELECT *
+		FROM accounts
+		WHERE user_id = $1 AND deleted_at IS NULL
+		ORDER BY name ASC`
+
+	return p.fetch(ctx, query, id)
+}
+
+func (p *postgresAccountRepository) Create(ctx context.Context, acc *domain.Account) error {
+	query := `
+		INSERT INTO accounts
+			(name, balance, note, user_id)
+		VALUES ($1, $2, $3, $4)
+		RETURNING id`
+
+	ctx, span := spanWithQuery(ctx, p.tracer, query)
+	defer span.End()
+
+	if err := p.conn.QueryRow(
+		ctx,
+		query,
+		acc.Name,
+		acc.Balance,
+		acc.Note,
+		acc.CreatedBy,
+	).Scan(&acc.ID); err != nil {
+		span.SetStatus(codes.Error, "failed inserting account")
+		span.RecordError(err)
+		return err
+	}
+
+	return nil
+}

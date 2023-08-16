@@ -1,5 +1,7 @@
 package domain
 
+import "context"
+
 type Category struct {
 	Base
 
@@ -7,4 +9,16 @@ type Category struct {
 	Name      string `json:"name"`
 	Note      string `json:"note,omitempty"`
 	CreatedBy *uint  `json:"-"`
+}
+
+// CategoryRepository represents the categories repository contract
+type CategoryRepository interface {
+	GetByID(ctx context.Context, id int64) (Category, error)
+	GetByUser(ctx context.Context, id int64) ([]Category, error)
+	GetAll(ctx context.Context) ([]Category, error)
+
+	CreateOrUpdate(ctx context.Context, acc *Category) error
+	Update(ctx context.Context, acc *Category) error
+	Create(ctx context.Context, acc *Category) error
+	Delete(ctx context.Context, id int64) error
 }

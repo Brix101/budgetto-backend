@@ -1,6 +1,9 @@
 package domain
 
-import "strings"
+import (
+	"context"
+	"strings"
+)
 
 type User struct {
 	Base
@@ -22,4 +25,16 @@ func (u User) CheckPassword(password string) bool {
 		return true
 	}
 	return false
+}
+
+// UserRepository represents the user's repository contract
+type UserRepository interface {
+	GetByID(ctx context.Context, id int64) (User, error)
+	GetByEmail(ctx context.Context, email string) (User, error)
+	GetAll(ctx context.Context) ([]User, error)
+
+	CreateOrUpdate(ctx context.Context, acc *User) error
+	Update(ctx context.Context, acc *User) error
+	Create(ctx context.Context, acc *User) error
+	Delete(ctx context.Context, id int64) error
 }

@@ -1,13 +1,13 @@
 package main
 
 import (
-	"database/sql"
+	"context"
 	"fmt"
 	"log"
 	"os"
 
+	"github.com/jackc/pgx/v5" // Import the PostgreSQL driver
 	_ "github.com/joho/godotenv/autoload"
-	_ "github.com/lib/pq" // Import the PostgreSQL driver
 )
 
 func main() {
@@ -16,14 +16,13 @@ func main() {
 	log.Println("Hello world")
 	log.Println(database_url)
 
-	db, err := sql.Open("postgres", database_url)
+	db, err := pgx.Connect(context.Background(), os.Getenv("DATABASE_URL"))
 	if err != nil {
 		panic(err)
 	}
-	defer db.Close() // Close the database connection when you're done
-	// Perform a query
+
 	query := "SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE';"
-	rows, err := db.Query(query)
+	rows, err := db.Query(context.Background(), query)
 	if err != nil {
 		panic(err)
 	}
