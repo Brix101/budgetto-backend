@@ -33,8 +33,8 @@ type UserRepository interface {
 	GetByEmail(ctx context.Context, email string) (User, error)
 	GetAll(ctx context.Context) ([]User, error)
 
-	CreateOrUpdate(ctx context.Context, acc *User) error
-	Update(ctx context.Context, acc *User) error
-	Create(ctx context.Context, acc *User) error
+	CreateOrUpdate(ctx context.Context, usr *User) error
+	Update(ctx context.Context, usr *User) error
+	Create(ctx context.Context, usr *User) error
 	Delete(ctx context.Context, id int64) error
 }

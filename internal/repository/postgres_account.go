@@ -68,7 +68,7 @@ func (p *postgresAccountRepository) GetByID(ctx context.Context, id int64) (doma
 	return accs[0], nil
 }
 
-func (p *postgresAccountRepository) GetByUser(ctx context.Context, id int64) ([]domain.Account, error) {
+func (p *postgresAccountRepository) GetByUserID(ctx context.Context, id int64) ([]domain.Account, error) {
 	query := `
 		SELECT *
 		FROM accounts

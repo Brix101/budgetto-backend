@@ -17,8 +17,8 @@ type BudgetRepository interface {
 	GetByUser(ctx context.Context, id int64) ([]Budget, error)
 	GetAll(ctx context.Context) ([]Budget, error)
 
-	CreateOrUpdate(ctx context.Context, acc *Budget) error
-	Update(ctx context.Context, acc *Budget) error
-	Create(ctx context.Context, acc *Budget) error
+	CreateOrUpdate(ctx context.Context, bud *Budget) error
+	Update(ctx context.Context, bud *Budget) error
+	Create(ctx context.Context, bud *Budget) error
 	Delete(ctx context.Context, id int64) error
 }

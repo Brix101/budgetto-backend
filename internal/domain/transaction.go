@@ -44,8 +44,8 @@ type TransactionRepository interface {
 	GetByUser(ctx context.Context, id int64) ([]Transaction, error)
 	GetAll(ctx context.Context) ([]Transaction, error)
 
-	CreateOrUpdate(ctx context.Context, acc *Transaction) error
-	Update(ctx context.Context, acc *Transaction) error
-	Create(ctx context.Context, acc *Transaction) error
+	CreateOrUpdate(ctx context.Context, tra *Transaction) error
+	Update(ctx context.Context, tra *Transaction) error
+	Create(ctx context.Context, tra *Transaction) error
 	Delete(ctx context.Context, id int64) error
 }
