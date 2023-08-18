@@ -42,6 +42,7 @@ func (a *api) Routes() *chi.Mux {
 
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Mount("/health", a.HealthRoutes())
+		r.Mount("/categories", a.CategoryRoutes())
 	})
 
 	return r

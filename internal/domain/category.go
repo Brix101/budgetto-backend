@@ -6,9 +6,9 @@ type Category struct {
 	Base
 
 	// category fields
-	Name      string `json:"name"`
-	Note      string `json:"note,omitempty"`
-	CreatedBy *uint  `json:"-"`
+	Name   string `json:"name" validate:"required"`
+	Note   string `json:"note,omitempty"`
+	UserID *uint  `json:"user_id"`
 }
 
 // CategoryRepository represents the categories repository contract
@@ -19,6 +19,6 @@ type CategoryRepository interface {
 
 	// CreateOrUpdate(ctx context.Context, cat *Category) error
 	// Update(ctx context.Context, cat *Category) error
-	// Create(ctx context.Context, cat *Category) error
+	Create(ctx context.Context, cat *Category) (*Category, error)
 	// Delete(ctx context.Context, id int64) error
 }
