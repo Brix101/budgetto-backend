@@ -7,6 +7,7 @@ import (
 	"github.com/Brix101/budgetto-backend/internal/domain"
 	"github.com/Brix101/budgetto-backend/internal/repository"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -37,6 +38,8 @@ func (a *api) Server(port string) *http.Server {
 
 func (a *api) Routes() *chi.Mux {
 	r := chi.NewRouter()
+	r.Use(middleware.Logger)
+
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Mount("/health", a.HealthRoutes())
 	})
