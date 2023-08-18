@@ -4,38 +4,27 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/Brix101/budgetto-backend/internal/domain"
+	"github.com/Brix101/budgetto-backend/internal/repository"
 	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type api struct {
 	httpClient *http.Client
+
+	categoryRepo domain.CategoryRepository
 }
 
-func NewAPI() *api {
-	// tracer := otel.Tracer("api")
-
-	// accountRepo := repository.NewPostgresAccount(pool)
-	// deviceRepo := repository.NewPostgresDevice(pool)
-	// subredditRepo := repository.NewPostgresSubreddit(pool)
-	// watcherRepo := repository.NewPostgresWatcher(pool)
-	// userRepo := repository.NewPostgresUser(pool)
-	// liveActivityRepo := repository.NewPostgresLiveActivity(pool)
+func NewAPI(pool *pgxpool.Pool) *api {
+	categoryRepo := repository.NewPostgresCategory(pool)
 
 	client := &http.Client{}
 
 	return &api{
-		// logger:     logger,
-		// statsd:     statsd,
-		// reddit:     reddit,
-		// apns:       apns,
 		httpClient: client,
 
-		// accountRepo:      accountRepo,
-		// deviceRepo:       deviceRepo,
-		// subredditRepo:    subredditRepo,
-		// watcherRepo:      watcherRepo,
-		// userRepo:         userRepo,
-		// liveActivityRepo: liveActivityRepo,
+		categoryRepo: categoryRepo,
 	}
 }
 

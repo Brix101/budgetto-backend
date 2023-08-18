@@ -5,6 +5,7 @@ import (
 
 	"github.com/Brix101/budgetto-backend/config"
 	"github.com/Brix101/budgetto-backend/internal/api"
+	"github.com/Brix101/budgetto-backend/internal/util"
 	"github.com/spf13/cobra"
 )
 
@@ -16,7 +17,13 @@ func APICmd(ctx context.Context) *cobra.Command {
 		RunE: func(_ *cobra.Command, _ []string) error {
 			env := config.GetConfig()
 
-			api := api.NewAPI()
+			db, err := util.NewDatabasePool(ctx, env.DATABASE_URL, 16)
+			if err != nil {
+				return err
+			}
+			defer db.Close()
+
+			api := api.NewAPI(db)
 			srv := api.Server(env.PORT)
 
 			go func() { _ = srv.ListenAndServe() }()
