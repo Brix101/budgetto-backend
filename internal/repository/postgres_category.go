@@ -85,10 +85,9 @@ func (p *postgresCategoryRepository) GetByUserID(ctx context.Context, id int64) 
 
 func (p *postgresCategoryRepository) Create(ctx context.Context, cat *domain.Category) (*domain.Category, error) {
 	query := `
-		INSERT INTO categories
-			(name, note, user_id, created_at, updated_at)
-		VALUES ($1, $2, $3, NOW(), NOW())
-		RETURNING *`
+		INSERT INTO categories (name, note, user_id)
+		VALUES ($1, $2, $3)
+		RETURNING id, created_at, updated_at`
 
 	ctx, span := spanWithQuery(ctx, p.tracer, query)
 	defer span.End()
@@ -101,12 +100,8 @@ func (p *postgresCategoryRepository) Create(ctx context.Context, cat *domain.Cat
 		cat.UserID,
 	).Scan(
 		&cat.ID,
-		&cat.Name,
-		&cat.Note,
-		&cat.UserID,
 		&cat.CreatedAt,
-		&cat.UpdatedAt,
-		&cat.DeletedAt); err != nil {
+		&cat.UpdatedAt); err != nil {
 		span.SetStatus(codes.Error, "failed inserting catount")
 		span.RecordError(err)
 		return nil, err
