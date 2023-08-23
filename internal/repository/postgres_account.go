@@ -55,7 +55,7 @@ func (p *postgresAccountRepository) GetByID(ctx context.Context, id int64) (doma
 	query := `
 		SELECT *
 		FROM accounts
-		WHERE id = $1 AND deleted_at IS NULL`
+		WHERE id = $1 AND is_deleted = false`
 
 	accs, err := p.fetch(ctx, query, id)
 	if err != nil {
@@ -72,7 +72,7 @@ func (p *postgresAccountRepository) GetByUserID(ctx context.Context, id int64) (
 	query := `
 		SELECT *
 		FROM accounts
-		WHERE user_id = $1 AND deleted_at IS NULL
+		WHERE user_id = $1 AND is_deleted = false
 		ORDER BY name ASC`
 
 	return p.fetch(ctx, query, id)
