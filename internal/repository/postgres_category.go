@@ -42,7 +42,6 @@ func (p *postgresCategoryRepository) fetch(ctx context.Context, query string, ar
 			&cat.UserID,
 			&cat.CreatedAt,
 			&cat.UpdatedAt,
-			&cat.DeletedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -59,7 +58,7 @@ func (p *postgresCategoryRepository) GetByID(ctx context.Context, id int64) (dom
 		SELECT *
 		FROM categories
 		WHERE id = $1 
-		AND deleted_at IS NULL`
+		AND is_deleted = false`
 
 	cats, err := p.fetch(ctx, query, id)
 	if err != nil {
@@ -77,7 +76,7 @@ func (p *postgresCategoryRepository) GetByUserID(ctx context.Context, id int64) 
 		SELECT *
 		FROM categories
 		WHERE user_id = $1 
-		OR deleted_at IS NULL
+		OR is_deleted = false
 		ORDER BY name ASC`
 
 	return p.fetch(ctx, query, id)
