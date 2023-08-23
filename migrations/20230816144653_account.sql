@@ -5,7 +5,7 @@ CREATE TABLE accounts (
   name VARCHAR NOT NULL,
   balance DOUBLE PRECISION DEFAULT 0,
   note TEXT,
-  user_id integer REFERENCES users(id) ON DELETE CASCADE,
+  created_by INTEGER REFERENCES users (id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   is_deleted BOOLEAN DEFAULT FALSE
