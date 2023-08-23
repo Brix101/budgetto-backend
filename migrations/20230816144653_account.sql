@@ -6,8 +6,8 @@ CREATE TABLE accounts (
   balance DOUBLE PRECISION DEFAULT 0,
   note TEXT,
   user_id integer REFERENCES users(id) ON DELETE CASCADE,
-  created_at TIMESTAMPTZ DEFAULT current_timestamp,
-  updated_at TIMESTAMPTZ DEFAULT current_timestamp,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
   deleted_at TIMESTAMPTZ
 );
 -- +goose StatementEnd
