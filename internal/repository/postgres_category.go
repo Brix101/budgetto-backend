@@ -39,7 +39,7 @@ func (p *postgresCategoryRepository) fetch(ctx context.Context, query string, ar
 			&cat.ID,
 			&cat.Name,
 			&cat.Note,
-			&cat.UserID,
+			&cat.CreatedBy,
 			&cat.CreatedAt,
 			&cat.UpdatedAt,
 		); err != nil {
@@ -96,7 +96,7 @@ func (p *postgresCategoryRepository) Create(ctx context.Context, cat *domain.Cat
 		query,
 		cat.Name,
 		cat.Note,
-		cat.UserID,
+		cat.CreatedBy,
 	).Scan(
 		&cat.ID,
 		&cat.CreatedAt,
