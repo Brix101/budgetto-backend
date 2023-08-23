@@ -8,7 +8,7 @@ type Category struct {
 	// category fields
 	Name   string `json:"name" validate:"required"`
 	Note   string `json:"note,omitempty"`
-	UserID *uint  `json:"user_id"`
+	CreatedBy *uint  `json:"created_by"`
 }
 
 // CategoryRepository represents the categories repository contract
