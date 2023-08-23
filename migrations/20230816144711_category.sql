@@ -7,7 +7,7 @@ CREATE TABLE categories (
   user_id integer REFERENCES users (id) ON DELETE CASCADE DEFAULT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
-  deleted_at TIMESTAMPTZ
+  is_deleted BOOLEAN DEFAULT FALSE
 );
 -- +goose StatementEnd
 
