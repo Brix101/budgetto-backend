@@ -10,7 +10,7 @@ CREATE TABLE users (
     is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
-	deleted_at TIMESTAMPTZ
+    is_deleted BOOLEAN DEFAULT FALSE
 );
 CREATE INDEX IF NOT EXISTS user_email_idx ON users (email);
 -- +goose StatementEnd
