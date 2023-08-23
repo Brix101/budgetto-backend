@@ -8,9 +8,9 @@ CREATE TABLE users (
     bio TEXT,
     image VARCHAR DEFAULT '',
     is_active BOOLEAN DEFAULT true,
-    created_at TIMESTAMPTZ DEFAULT current_timestamp,
-    updated_at TIMESTAMPTZ DEFAULT current_timestamp,
-  	deleted_at TIMESTAMPTZ
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+	deleted_at TIMESTAMPTZ
 );
 CREATE INDEX IF NOT EXISTS user_email_idx ON users (email);
 -- +goose StatementEnd
