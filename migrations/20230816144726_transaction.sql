@@ -9,7 +9,7 @@ CREATE TABLE transactions (
     transaction_type transaction_type NOT NULL DEFAULT 'Expense',
     account_id integer REFERENCES accounts(id) ON DELETE CASCADE,
     category_id integer REFERENCES categories(id) ON DELETE CASCADE,
-    user_id integer REFERENCES users(id) ON DELETE CASCADE,
+    created_by INTEGER REFERENCES users (id) ON DELETE CASCADE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
     is_deleted BOOLEAN DEFAULT FALSE
