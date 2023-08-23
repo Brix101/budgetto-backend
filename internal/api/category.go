@@ -45,7 +45,7 @@ func (cr api) categoryCreateHandler(w http.ResponseWriter, r *http.Request) {
 
 	var cat domain.Category
 	userID := uint(1)
-	cat.UserID = &userID
+	cat.CreatedBy = &userID
 	cat.Note = ""
 
 	err := json.NewDecoder(r.Body).Decode(&cat)
