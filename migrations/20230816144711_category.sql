@@ -5,8 +5,8 @@ CREATE TABLE categories (
 	name VARCHAR NOT NULL,
   note TEXT,
   user_id integer REFERENCES users (id) ON DELETE CASCADE DEFAULT NULL,
-  created_at TIMESTAMPTZ DEFAULT current_timestamp,
-  updated_at TIMESTAMPTZ DEFAULT current_timestamp,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
   deleted_at TIMESTAMPTZ
 );
 -- +goose StatementEnd
