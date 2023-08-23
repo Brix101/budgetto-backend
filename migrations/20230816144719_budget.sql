@@ -4,8 +4,8 @@
 CREATE TABLE budgets (
     id SERIAL PRIMARY KEY,
     amount DOUBLE PRECISION DEFAULT 0,
-    category_id integer UNIQUE REFERENCES categories(id),
-    user_id integer REFERENCES users(id) ON DELETE CASCADE,
+    category_id INTEGER UNIQUE REFERENCES categories(id),
+    created_by INTEGER REFERENCES users (id) ON DELETE CASCADE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
     is_deleted BOOLEAN DEFAULT FALSE,
