@@ -10,8 +10,8 @@ CREATE TABLE transactions (
     account_id integer REFERENCES accounts(id) ON DELETE CASCADE,
     category_id integer REFERENCES categories(id) ON DELETE CASCADE,
     user_id integer REFERENCES users(id) ON DELETE CASCADE,
-    created_at TIMESTAMPTZ DEFAULT current_timestamp,
-    updated_at TIMESTAMPTZ DEFAULT current_timestamp,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
     deleted_at TIMESTAMPTZ
 );
 -- +goose StatementEnd
