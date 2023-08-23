@@ -8,7 +8,7 @@ CREATE TABLE accounts (
   user_id integer REFERENCES users(id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
-  deleted_at TIMESTAMPTZ
+  is_deleted BOOLEAN DEFAULT FALSE
 );
 -- +goose StatementEnd
 
