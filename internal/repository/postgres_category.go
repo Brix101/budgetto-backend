@@ -2,8 +2,6 @@ package repository
 
 import (
 	"context"
-	"fmt"
-	"log"
 
 	"github.com/Brix101/budgetto-backend/internal/domain"
 	"go.opentelemetry.io/otel"
@@ -33,8 +31,6 @@ func (p *postgresCategoryRepository) fetch(ctx context.Context, query string, ar
 	}
 	defer rows.Close()
 
-	fmt.Println(rows.Values())
-
 	var cats []domain.Category
 	for rows.Next() {
 		var cat domain.Category
@@ -54,12 +50,19 @@ func (p *postgresCategoryRepository) fetch(ctx context.Context, query string, ar
 }
 
 func (p *postgresCategoryRepository) GetByID(ctx context.Context, id int64) (domain.Category, error) {
-	log.Println(id)
 	query := `
-		SELECT *
-		FROM categories
-		WHERE id = $1 
-		AND is_deleted = false`
+		SELECT
+			id,
+			name,
+			note,
+			created_by,
+			created_at,
+			updated_at
+		FROM
+			categories
+		WHERE
+			id = $1
+			OR is_deleted = FALSE`
 
 	cats, err := p.fetch(ctx, query, id)
 	if err != nil {
@@ -72,20 +75,36 @@ func (p *postgresCategoryRepository) GetByID(ctx context.Context, id int64) (dom
 	return cats[0], nil
 }
 
-func (p *postgresCategoryRepository) GetByUserID(ctx context.Context, user_id int64) ([]domain.Category, error) {
+func (p *postgresCategoryRepository) GetByUserID(ctx context.Context, created_by int64) ([]domain.Category, error) {
 	query := `
-		SELECT *
-		FROM categories
-		WHERE user_id = $1 
-		OR is_deleted = false
-		ORDER BY name ASC`
+		SELECT
+			id,
+			name,
+			note,
+			created_by,
+			created_at,
+			updated_at,
+			is_deleted
+		FROM
+			categories
+		WHERE
+			created_by = $1
+			OR is_deleted = FALSE
+		ORDER BY
+			name ASC`
 
-	return p.fetch(ctx, query, user_id)
+	cats, err := p.fetch(ctx, query, created_by)
+
+	if err != nil {
+		return []domain.Category{}, err
+	}
+
+	return cats, nil
 }
 
 func (p *postgresCategoryRepository) Create(ctx context.Context, cat *domain.Category) (*domain.Category, error) {
 	query := `
-		INSERT INTO categories (name, note, user_id)
+		INSERT INTO categories (name, note, created_by)
 		VALUES ($1, $2, $3)
 		RETURNING id, created_at, updated_at`
 

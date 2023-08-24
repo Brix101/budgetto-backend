@@ -9,7 +9,7 @@ CREATE TABLE budgets (
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
     is_deleted BOOLEAN DEFAULT FALSE,
-    UNIQUE (user_id, category_id)
+    UNIQUE (created_by, category_id)
 );
 -- +goose StatementEnd
 

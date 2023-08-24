@@ -19,7 +19,7 @@ func (hr api) healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 		"status": "available",
 	}
 
-	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(data)
 }

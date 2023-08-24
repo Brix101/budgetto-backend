@@ -11,26 +11,28 @@ import (
 	"github.com/go-playground/validator"
 )
 
-func (cr api) CategoryRoutes() chi.Router {
+func (a api) CategoryRoutes() chi.Router {
 	r := chi.NewRouter()
 
-	r.Get("/", cr.categoryListHandler)
-	r.Post("/", cr.categoryCreateHandler)
+	r.Get("/", a.categoryListHandler)
+	r.Post("/", a.categoryCreateHandler)
 	return r
 }
 
-func (cr api) categoryListHandler(w http.ResponseWriter, r *http.Request) {
+func (a api) categoryListHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	categories, err := cr.categoryRepo.GetByUserID(ctx, 5)
-	if err != nil {
-		log.Fatal(err)
+	categories, err := a.categoryRepo.GetByUserID(ctx, 5)
+	if err != nil {		
+		a.errorResponse(w, r, 500, err)
+		return
 	}
+
 
 	catsJson, err := json.Marshal(categories)
 	if err != nil {
-		cr.errorResponse(w, r, 500, err)
+		a.errorResponse(w, r, 500, err)
 		return
 	}
 
@@ -39,7 +41,7 @@ func (cr api) categoryListHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(catsJson)
 }
 
-func (cr api) categoryCreateHandler(w http.ResponseWriter, r *http.Request) {
+func (a api) categoryCreateHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
@@ -50,7 +52,7 @@ func (cr api) categoryCreateHandler(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&cat)
 	if err != nil {
-		cr.errorResponse(w, r, 422, err)
+		a.errorResponse(w, r, 422, err)
 		return
 	}
 	// Validate the user struct
@@ -58,18 +60,18 @@ func (cr api) categoryCreateHandler(w http.ResponseWriter, r *http.Request) {
 	err = validate.Struct(cat)
 
 	if err != nil {
-		cr.errorResponse(w, r, 400, err)
+		a.errorResponse(w, r, 400, err)
 		return
 	}
 
-	category, err := cr.categoryRepo.Create(ctx, &cat)
+	category, err := a.categoryRepo.Create(ctx, &cat)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	catJson, err := json.Marshal(category)
 	if err != nil {
-		cr.errorResponse(w, r, 500, err)
+		a.errorResponse(w, r, 500, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
