@@ -74,7 +74,7 @@ func (p *postgresCategoryRepository) GetByID(ctx context.Context, id int64) (dom
 	if len(cat) == 0 {
 		return domain.Category{}, domain.ErrNotFound
 	}
-	
+
 	return cat[0], nil
 }
 
@@ -96,7 +96,6 @@ func (p *postgresCategoryRepository) GetByUserID(ctx context.Context, created_by
 			name ASC`
 
 	cats, err := p.fetch(ctx, query, created_by)
-
 	if err != nil {
 		return []domain.Category{}, err
 	}
@@ -180,8 +179,8 @@ func (p *postgresCategoryRepository) Update(ctx context.Context, cat *domain.Cat
 		cat.ID,
 		cat.Name,
 		cat.Note,
-	); 
-	
+	)
+
 	if err := row.Scan(&cat.UpdatedAt); err != nil {
 		span.SetStatus(codes.Error, "failed to update category")
 		span.RecordError(err)
@@ -203,8 +202,7 @@ func (p *postgresCategoryRepository) Delete(ctx context.Context, id int64) error
 	ctx, span := spanWithQuery(ctx, p.tracer, query)
 	defer span.End()
 
-	result , err := p.conn.Exec(ctx, query, id);
-
+	result, err := p.conn.Exec(ctx, query, id)
 	if err != nil {
 		span.SetStatus(codes.Error, "failed to delete category")
 		span.RecordError(err)

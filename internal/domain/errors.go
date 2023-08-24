@@ -12,7 +12,7 @@ var (
 )
 
 type ErrResponse struct {
-	Message string       `json:"message"`
+	Message string     `json:"message"`
 	Errors  []ErrField `json:"errors,omitempty"`
 }
 

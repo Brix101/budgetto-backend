@@ -14,11 +14,9 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
-
 func (a *api) errorResponse(w http.ResponseWriter, _ *http.Request, status int, err error) {
 	var errorResponse domain.ErrResponse
 	statusCode := status // Default status code
-
 
 	log.Println(reflect.TypeOf(err), err)
 	switch typedErr := err.(type) {
@@ -28,17 +26,17 @@ func (a *api) errorResponse(w http.ResponseWriter, _ *http.Request, status int, 
 		fieldName := "field" // Default field name if constraint name is not in the expected format
 		if len(parts) > 0 {
 			fieldName = parts[len(parts)-1]
-			if fieldName == "key"{
+			if fieldName == "key" {
 				fieldName = parts[1]
 			}
 		}
 
 		switch typedErr.Code {
 		case "23505":
-			statusCode = http.StatusBadRequest			
-			message := fmt.Sprintf("The %s you entered is already taken.", fieldName)			
+			statusCode = http.StatusBadRequest
+			message := fmt.Sprintf("The %s you entered is already taken.", fieldName)
 			errorFields := []domain.ErrField{{
-				Field: fieldName,
+				Field:   fieldName,
 				Message: message,
 			}}
 
@@ -46,13 +44,13 @@ func (a *api) errorResponse(w http.ResponseWriter, _ *http.Request, status int, 
 				Message: "Validation Error",
 				Errors:  errorFields,
 			}
-			
+
 		// case "23503":
 		// 	statusCode = http.StatusBadRequest
 		// 	// message := fmt.Sprintf("%s is already taken.", strings.Title(fieldName))
 		// 	return statusCode, []ErrorInfo{{Field: fieldName, Message: typedErr.Message}}
-			// Add more cases to handle other PostgreSQL error codes if needed
-			// ...
+		// Add more cases to handle other PostgreSQL error codes if needed
+		// ...
 		default:
 			statusCode = 500
 			errorResponse = domain.ErrResponse{
@@ -77,9 +75,9 @@ func (a *api) errorResponse(w http.ResponseWriter, _ *http.Request, status int, 
 		}
 	case error:
 		var message string
-		if statusCode == 500{
-			message =  "Something went wrong!"
-		}else{
+		if statusCode == 500 {
+			message = "Something went wrong!"
+		} else {
 			message = typedErr.Error()
 		}
 		errorResponse = domain.ErrResponse{

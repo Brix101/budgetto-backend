@@ -24,7 +24,7 @@ func (u *User) NormalizedName() string {
 
 func (u *User) HashPassword() error {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(u.Password), 14)
-    if err != nil{
+	if err != nil {
 		return err
 	}
 	u.Password = string(bytes)
@@ -32,8 +32,8 @@ func (u *User) HashPassword() error {
 }
 
 func (u User) CheckPassword(password string) bool {
-    err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password))
-    return err == nil
+	err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password))
+	return err == nil
 }
 
 // UserRepository represents the user's repository contract

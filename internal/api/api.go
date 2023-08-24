@@ -15,7 +15,7 @@ type api struct {
 	httpClient *http.Client
 
 	categoryRepo domain.CategoryRepository
-	userRepo domain.UserRepository
+	userRepo     domain.UserRepository
 }
 
 func NewAPI(pool *pgxpool.Pool) *api {
@@ -28,7 +28,7 @@ func NewAPI(pool *pgxpool.Pool) *api {
 		httpClient: client,
 
 		categoryRepo: categoryRepo,
-		userRepo: userRepo,
+		userRepo:     userRepo,
 	}
 }
 

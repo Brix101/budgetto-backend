@@ -9,8 +9,6 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-
-
 func (a api) UserRoutes() chi.Router {
 	r := chi.NewRouter()
 
@@ -30,13 +28,12 @@ func (a api) userListHandler(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	user, err := a.userRepo.GetByEmail(ctx, "brixterporras@gmail.com")
-	if err != nil {		
+	if err != nil {
 		a.errorResponse(w, r, 500, err)
 		return
 	}
 
 	fmt.Println(user)
-
 
 	catsJson, err := json.Marshal(user)
 	if err != nil {

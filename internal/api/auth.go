@@ -10,8 +10,6 @@ import (
 	"github.com/go-playground/validator"
 )
 
-
-
 func (a api) AuthRoutes() chi.Router {
 	r := chi.NewRouter()
 
@@ -26,18 +24,17 @@ type signInRequest struct {
 	Password string `json:"password" validate:"required,min=6"` // Minimum length: 6
 }
 
-type signUpRequest struct {	
-	Name    string `json:"name" validate:"required"`
+type signUpRequest struct {
+	Name     string `json:"name" validate:"required"`
 	Email    string `json:"email" validate:"required,email"`
 	Password string `json:"password" validate:"required,min=6"` // Minimum length: 6
 }
-
 
 func (a api) signInHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	var reqBody signInRequest 
+	var reqBody signInRequest
 	err := json.NewDecoder(r.Body).Decode(&reqBody)
 	if err != nil {
 		a.errorResponse(w, r, 422, err)
@@ -53,7 +50,7 @@ func (a api) signInHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	usr, err := a.userRepo.GetByEmail(ctx, reqBody.Email)
-	if err != nil {		
+	if err != nil {
 		a.errorResponse(w, r, 403, domain.ErrInvalidCredentials)
 		return
 	}
@@ -78,7 +75,7 @@ func (a api) signUpHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	reqBody := signUpRequest{} 
+	reqBody := signUpRequest{}
 	err := json.NewDecoder(r.Body).Decode(&reqBody)
 	if err != nil {
 		a.errorResponse(w, r, 422, err)
@@ -94,9 +91,9 @@ func (a api) signUpHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	newUsr := domain.User{
-		Name:reqBody.Name,
-		Email:reqBody.Email,
-		Password:reqBody.Password,
+		Name:     reqBody.Name,
+		Email:    reqBody.Email,
+		Password: reqBody.Password,
 	}
 
 	if err := newUsr.HashPassword(); err != nil {
@@ -105,11 +102,10 @@ func (a api) signUpHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	usr, err := a.userRepo.Create(ctx, &newUsr)
-	if err != nil {		
+	if err != nil {
 		a.errorResponse(w, r, 500, err)
 		return
 	}
-
 
 	usrJSON, err := json.Marshal(usr)
 	if err != nil {

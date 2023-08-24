@@ -6,8 +6,8 @@ type Category struct {
 	Base
 
 	// category fields
-	Name   string `json:"name" validate:"required"`
-	Note   string `json:"note,omitempty"`
+	Name      string `json:"name" validate:"required"`
+	Note      string `json:"note,omitempty"`
 	CreatedBy *uint  `json:"-"`
 }
 
