@@ -7,6 +7,8 @@ var (
 	ErrNotFound = errors.New("Requested item was not found")
 	// ErrConflict will be returned if the item being persisted already exists
 	ErrConflict = errors.New("Item already exists")
+
+	ErrInvalidCredentials = errors.New("Invalid credentials. Please try again.")
 )
 
 type ErrResponse struct {

@@ -39,7 +39,7 @@ func (a api) categoryListHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 
-	catsJson, err := json.Marshal(cats)
+	catsJSON, err := json.Marshal(cats)
 	if err != nil {
 		a.errorResponse(w, r, 500, err)
 		return
@@ -47,7 +47,7 @@ func (a api) categoryListHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write(catsJson)
+	w.Write(catsJSON)
 }
 
 func (a api) categoryGetHandler(w http.ResponseWriter, r *http.Request) {
@@ -71,7 +71,7 @@ func (a api) categoryGetHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 
-	catsJson, err := json.Marshal(cat)
+	catsJSON, err := json.Marshal(cat)
 	if err != nil {
 		a.errorResponse(w, r, 500, err)
 		return
@@ -79,7 +79,7 @@ func (a api) categoryGetHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write(catsJson)
+	w.Write(catsJSON)
 }
 
 func (a api) categoryCreateHandler(w http.ResponseWriter, r *http.Request) {
@@ -110,14 +110,14 @@ func (a api) categoryCreateHandler(w http.ResponseWriter, r *http.Request) {
 		a.errorResponse(w, r, 500, err)
 	}
 
-	catJson, err := json.Marshal(cat)
+	catJSON, err := json.Marshal(cat)
 	if err != nil {
 		a.errorResponse(w, r, 500, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write(catJson)
+	w.Write(catJSON)
 }
 
 func (a api) categoryUpdateHandler(w http.ResponseWriter, r *http.Request) {
@@ -160,7 +160,7 @@ func (a api) categoryUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		a.errorResponse(w, r, 500, err)
 	}
 
-	catJson, err := json.Marshal(updatedCat)
+	catJSON, err := json.Marshal(updatedCat)
 	if err != nil {
 		a.errorResponse(w, r, 500, err)
 		return
@@ -168,7 +168,7 @@ func (a api) categoryUpdateHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write(catJson)
+	w.Write(catJSON)
 }
 
 func (a api) categoryDeleteHandler(w http.ResponseWriter, r *http.Request) {

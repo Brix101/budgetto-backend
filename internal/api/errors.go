@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"reflect"
 	"strconv"
+	"strings"
 
 	"github.com/Brix101/budgetto-backend/internal/domain"
 	"github.com/go-playground/validator"
@@ -18,24 +19,12 @@ func (a *api) errorResponse(w http.ResponseWriter, _ *http.Request, status int, 
 
 	log.Println(reflect.TypeOf(err), err)
 	switch typedErr := err.(type) {
-	case error:
-		var message string
-		if status == 500{
-			log.Println(typedErr)
-			message =  "Something went wrong!"
-		}else{
-			message = typedErr.Error()
-		}
-
-		errorResponse = domain.ErrResponse{
-			Message: message,
-			Errors:  []domain.ErrField{},
-		}
 	case validator.ValidationErrors:
+		fmt.Println("Validation")
 		errorFields := []domain.ErrField{}
 		for _, e := range typedErr {
 			errorFields = append(errorFields, domain.ErrField{
-				Field:   e.Field(),
+				Field:   strings.ToLower(e.Field()),
 				Message: GetValidationErrorMessage(e),
 			})
 		}
@@ -44,18 +33,30 @@ func (a *api) errorResponse(w http.ResponseWriter, _ *http.Request, status int, 
 			Message: "Validation Error",
 			Errors:  errorFields,
 		}
+	case error:
+		var message string
+		if status == 500{
+			message =  "Something went wrong!"
+		}else{
+			message = typedErr.Error()
+		}
+		errorResponse = domain.ErrResponse{
+			Message: message,
+			Errors:  []domain.ErrField{},
+		}
+
 	}
 
 	errorResJson, _ := json.Marshal(errorResponse)
 
-	// w.Header().Set("X-Budgetto-Error", err.Error())
+	w.Header().Set("X-Budgetto-Error", err.Error())
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	w.Write(errorResJson)
 }
 
 func GetValidationErrorMessage(err validator.FieldError) string {
-	fieldName := err.Field()
+	fieldName := strings.ToLower(err.Field())
 	switch err.Tag() {
 	case "required":
 		return fmt.Sprintf("%s field is required.", fieldName)

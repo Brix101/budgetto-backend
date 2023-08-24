@@ -20,6 +20,13 @@ func (u *User) NormalizedName() string {
 	return strings.ToLower(u.Name)
 }
 
+func (u User) HashPassword(password string) bool {
+	if u.Password == password {
+		return true
+	}
+	return false
+}
+
 func (u User) CheckPassword(password string) bool {
 	if u.Password == password {
 		return true
@@ -31,10 +38,10 @@ func (u User) CheckPassword(password string) bool {
 type UserRepository interface {
 	GetByID(ctx context.Context, id int64) (User, error)
 	GetByEmail(ctx context.Context, email string) (User, error)
-	GetAll(ctx context.Context) ([]User, error)
+	// GetAll(ctx context.Context) ([]User, error)
 
-	CreateOrUpdate(ctx context.Context, usr *User) error
-	Update(ctx context.Context, usr *User) error
-	Create(ctx context.Context, usr *User) error
-	Delete(ctx context.Context, id int64) error
+	// CreateOrUpdate(ctx context.Context, usr *User) error
+	// Update(ctx context.Context, usr *User) error
+	// Create(ctx context.Context, usr *User) error
+	// Delete(ctx context.Context, id int64) error
 }
