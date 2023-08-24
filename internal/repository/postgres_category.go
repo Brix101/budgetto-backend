@@ -102,6 +102,36 @@ func (p *postgresCategoryRepository) GetByUserID(ctx context.Context, created_by
 	return cats, nil
 }
 
+// func (p *postgresCategoryRepository) CreateOrUpdate(ctx context.Context, cat *domain.Category) error {
+// 	query := `
+// 		INSERT INTO categories (name, note, created_by)
+// 		VALUES ($1, $2, $3)
+// 		ON CONFLICT(username) DO
+// 			UPDATE SET access_token = $3,
+// 				refresh_token = $4,
+// 				token_expires_at = $5,
+// 				last_message_id = $6,
+// 				is_deleted = FALSE
+// 		RETURNING id`
+
+// 	ctx, span := spanWithQuery(ctx, p.tracer, query)
+// 	defer span.End()
+
+// 	if err := p.conn.QueryRow(
+// 		ctx,
+// 		query,
+// 		cat.ID,
+// 		cat.Name,
+// 		cat.Note,
+// 	).Scan(&cat.ID); err != nil {
+// 		span.SetStatus(codes.Error, "failed upserting category")
+// 		span.RecordError(err)
+// 		return err
+// 	}
+
+// 	return nil
+// }
+
 func (p *postgresCategoryRepository) Create(ctx context.Context, cat *domain.Category) (*domain.Category, error) {
 	query := `
 		INSERT INTO categories (name, note, created_by)
@@ -126,4 +156,52 @@ func (p *postgresCategoryRepository) Create(ctx context.Context, cat *domain.Cat
 		return nil, err
 	}
 	return cat, nil
+}
+
+func (p *postgresCategoryRepository) Update(ctx context.Context, cat *domain.Category) error {
+	query := `
+		UPDATE categories
+		SET 
+			name = $2,
+			note = $3,
+			updated_at = NOW()
+		WHERE 
+			id = $1`
+
+	ctx, span := spanWithQuery(ctx, p.tracer, query)
+	defer span.End()
+
+	if _, err := p.conn.Exec(
+		ctx,
+		query,
+		cat.ID,
+		cat.Name,
+		cat.Note,
+	); err != nil {
+		span.SetStatus(codes.Error, "failed to update category")
+		span.RecordError(err)
+		return err
+	}
+
+	return nil
+}
+
+func (p *postgresCategoryRepository) Delete(ctx context.Context, id int64) error {
+	query := `
+		UPDATE categories
+		SET 
+			is_deleted =,
+			updated_at = NOW()
+		WHERE 
+			id = $1`
+
+	ctx, span := spanWithQuery(ctx, p.tracer, query)
+	defer span.End()
+
+	if _, err := p.conn.Exec(ctx, query, id); err != nil {
+		span.SetStatus(codes.Error, "failed to delete category")
+		span.RecordError(err)
+		return err
+	}
+	return nil
 }
