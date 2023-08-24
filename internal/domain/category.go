@@ -18,7 +18,7 @@ type CategoryRepository interface {
 	// GetAll(ctx context.Context) ([]Category, error)
 
 	// CreateOrUpdate(ctx context.Context, cat *Category) error
-	Update(ctx context.Context, cat *Category) error
+	Update(ctx context.Context, cat *Category) (*Category, error)
 	Create(ctx context.Context, cat *Category) (*Category, error)
 	Delete(ctx context.Context, id int64) error
 }

@@ -3,8 +3,8 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/Brix101/budgetto-backend/internal/domain"
 	"github.com/go-chi/chi/v5"
@@ -16,21 +16,62 @@ func (a api) CategoryRoutes() chi.Router {
 
 	r.Get("/", a.categoryListHandler)
 	r.Post("/", a.categoryCreateHandler)
+	r.Get("/{id}", a.categoryGetHandler)
+	r.Put("/{id}", a.categoryUpdateHandler)
+	r.Delete("/{id}", a.categoryDeleteHandler)
+
 	return r
+}
+
+type updateCategoryRequest struct {
+	Name   string 	`json:"name"`
+	Note   string 	`json:"note"`
 }
 
 func (a api) categoryListHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	categories, err := a.categoryRepo.GetByUserID(ctx, 5)
+	cats, err := a.categoryRepo.GetByUserID(ctx, 5)
 	if err != nil {		
 		a.errorResponse(w, r, 500, err)
 		return
 	}
 
 
-	catsJson, err := json.Marshal(categories)
+	catsJson, err := json.Marshal(cats)
+	if err != nil {
+		a.errorResponse(w, r, 500, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(catsJson)
+}
+
+func (a api) categoryGetHandler(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithCancel(r.Context())
+	defer cancel()
+
+	id, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil {		
+		a.errorResponse(w, r, 500, err)
+		return
+	}
+
+	cat, err := a.categoryRepo.GetByID(ctx, int64(id))
+	if err != nil {		
+		status := 500
+		if err.Error() == domain.ErrNotFound.Error(){
+			status = 404
+		}
+		a.errorResponse(w, r, status, err)
+		return
+	}
+
+
+	catsJson, err := json.Marshal(cat)
 	if err != nil {
 		a.errorResponse(w, r, 500, err)
 		return
@@ -45,31 +86,31 @@ func (a api) categoryCreateHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	var cat domain.Category
+	var newCat domain.Category
 	userID := uint(1)
-	cat.CreatedBy = &userID
-	cat.Note = ""
+	newCat.CreatedBy = &userID
+	newCat.Note = ""
 
-	err := json.NewDecoder(r.Body).Decode(&cat)
+	err := json.NewDecoder(r.Body).Decode(&newCat)
 	if err != nil {
 		a.errorResponse(w, r, 422, err)
 		return
 	}
-	// Validate the user struct
+
 	validate := validator.New()
-	err = validate.Struct(cat)
+	err = validate.Struct(newCat)
 
 	if err != nil {
 		a.errorResponse(w, r, 400, err)
 		return
 	}
 
-	category, err := a.categoryRepo.Create(ctx, &cat)
+	cat, err := a.categoryRepo.Create(ctx, &newCat)
 	if err != nil {
-		log.Fatal(err)
+		a.errorResponse(w, r, 500, err)
 	}
 
-	catJson, err := json.Marshal(category)
+	catJson, err := json.Marshal(cat)
 	if err != nil {
 		a.errorResponse(w, r, 500, err)
 		return
@@ -78,3 +119,83 @@ func (a api) categoryCreateHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write(catJson)
 }
+
+func (a api) categoryUpdateHandler(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithCancel(r.Context())
+	defer cancel()
+
+	id, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil {		
+		a.errorResponse(w, r, 500, err)
+		return
+	}
+
+	cat, err := a.categoryRepo.GetByID(ctx, int64(id))
+	if err != nil {		
+		status := 500
+		if err.Error() == domain.ErrNotFound.Error(){
+			status = 404
+		}
+		a.errorResponse(w, r, status, err)
+		return
+	}
+	
+	var upCat updateCategoryRequest
+	if err := json.NewDecoder(r.Body).Decode(&upCat); err != nil {
+		a.errorResponse(w, r, 422, err)
+		return
+	}
+	defer r.Body.Close()
+
+	if upCat.Name != ""{
+		cat.Name = upCat.Name
+	}
+
+	if upCat.Note != ""{
+		cat.Note = upCat.Note
+	}
+
+	updatedCat, err := a.categoryRepo.Update(ctx, &cat)
+	if err != nil {
+		a.errorResponse(w, r, 500, err)
+	}
+
+	catJson, err := json.Marshal(updatedCat)
+	if err != nil {
+		a.errorResponse(w, r, 500, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(catJson)
+}
+
+func (a api) categoryDeleteHandler(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithCancel(r.Context())
+	defer cancel()
+
+	id, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil {		
+		a.errorResponse(w, r, 500, err)
+		return
+	}
+
+	err = a.categoryRepo.Delete(ctx, int64(id))
+	if err != nil {
+		status := 500
+		if err.Error() == domain.ErrNotFound.Error(){
+			status = 404
+		}
+		a.errorResponse(w, r, status, err)
+	}
+
+	data := map[string]string{
+		"message": "Item deleted successfully",
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(data)
+}
+

@@ -5,24 +5,18 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"reflect"
 	"strconv"
 
+	"github.com/Brix101/budgetto-backend/internal/domain"
 	"github.com/go-playground/validator"
 )
 
-type ErrorResponse struct {
-	Message string       `json:"message"`
-	Errors  []FieldError `json:"errors,omitempty"`
-}
-
-type FieldError struct {
-	Field   string `json:"field"`
-	Message string `json:"message"`
-}
 
 func (a *api) errorResponse(w http.ResponseWriter, _ *http.Request, status int, err error) {
-	var errorResponse ErrorResponse
+	var errorResponse domain.ErrResponse
 
+	log.Println(reflect.TypeOf(err), err)
 	switch typedErr := err.(type) {
 	case error:
 		var message string
@@ -33,20 +27,20 @@ func (a *api) errorResponse(w http.ResponseWriter, _ *http.Request, status int, 
 			message = typedErr.Error()
 		}
 
-		errorResponse = ErrorResponse{
+		errorResponse = domain.ErrResponse{
 			Message: message,
-			Errors:  []FieldError{},
+			Errors:  []domain.ErrField{},
 		}
 	case validator.ValidationErrors:
-		errorFields := []FieldError{}
+		errorFields := []domain.ErrField{}
 		for _, e := range typedErr {
-			errorFields = append(errorFields, FieldError{
+			errorFields = append(errorFields, domain.ErrField{
 				Field:   e.Field(),
 				Message: GetValidationErrorMessage(e),
 			})
 		}
 
-		errorResponse = ErrorResponse{
+		errorResponse = domain.ErrResponse{
 			Message: "Validation Error",
 			Errors:  errorFields,
 		}

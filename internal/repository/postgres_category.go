@@ -33,6 +33,7 @@ func (p *postgresCategoryRepository) fetch(ctx context.Context, query string, ar
 
 	var cats []domain.Category
 	for rows.Next() {
+
 		var cat domain.Category
 		if err := rows.Scan(
 			&cat.ID,
@@ -46,6 +47,7 @@ func (p *postgresCategoryRepository) fetch(ctx context.Context, query string, ar
 		}
 		cats = append(cats, cat)
 	}
+
 	return cats, nil
 }
 
@@ -62,17 +64,18 @@ func (p *postgresCategoryRepository) GetByID(ctx context.Context, id int64) (dom
 			categories
 		WHERE
 			id = $1
-			OR is_deleted = FALSE`
+			AND is_deleted = FALSE`
 
-	cats, err := p.fetch(ctx, query, id)
+	cat, err := p.fetch(ctx, query, id)
 	if err != nil {
 		return domain.Category{}, err
 	}
 
-	if len(cats) == 0 {
+	if len(cat) == 0 {
 		return domain.Category{}, domain.ErrNotFound
 	}
-	return cats[0], nil
+	
+	return cat[0], nil
 }
 
 func (p *postgresCategoryRepository) GetByUserID(ctx context.Context, created_by int64) ([]domain.Category, error) {
@@ -83,13 +86,12 @@ func (p *postgresCategoryRepository) GetByUserID(ctx context.Context, created_by
 			note,
 			created_by,
 			created_at,
-			updated_at,
-			is_deleted
+			updated_at
 		FROM
 			categories
 		WHERE
 			created_by = $1
-			OR is_deleted = FALSE
+			AND is_deleted = FALSE
 		ORDER BY
 			name ASC`
 
@@ -158,7 +160,7 @@ func (p *postgresCategoryRepository) Create(ctx context.Context, cat *domain.Cat
 	return cat, nil
 }
 
-func (p *postgresCategoryRepository) Update(ctx context.Context, cat *domain.Category) error {
+func (p *postgresCategoryRepository) Update(ctx context.Context, cat *domain.Category) (*domain.Category, error) {
 	query := `
 		UPDATE categories
 		SET 
@@ -166,31 +168,34 @@ func (p *postgresCategoryRepository) Update(ctx context.Context, cat *domain.Cat
 			note = $3,
 			updated_at = NOW()
 		WHERE 
-			id = $1`
+			id = $1
+		RETURNING updated_at`
 
 	ctx, span := spanWithQuery(ctx, p.tracer, query)
 	defer span.End()
 
-	if _, err := p.conn.Exec(
+	row := p.conn.QueryRow(
 		ctx,
 		query,
 		cat.ID,
 		cat.Name,
 		cat.Note,
-	); err != nil {
+	); 
+	
+	if err := row.Scan(&cat.UpdatedAt); err != nil {
 		span.SetStatus(codes.Error, "failed to update category")
 		span.RecordError(err)
-		return err
+		return nil, err
 	}
 
-	return nil
+	return cat, nil
 }
 
 func (p *postgresCategoryRepository) Delete(ctx context.Context, id int64) error {
 	query := `
 		UPDATE categories
 		SET 
-			is_deleted =,
+			is_deleted = TRUE,
 			updated_at = NOW()
 		WHERE 
 			id = $1`
@@ -198,10 +203,18 @@ func (p *postgresCategoryRepository) Delete(ctx context.Context, id int64) error
 	ctx, span := spanWithQuery(ctx, p.tracer, query)
 	defer span.End()
 
-	if _, err := p.conn.Exec(ctx, query, id); err != nil {
+	result , err := p.conn.Exec(ctx, query, id);
+
+	if err != nil {
 		span.SetStatus(codes.Error, "failed to delete category")
 		span.RecordError(err)
 		return err
 	}
+
+	rowsAffected := result.RowsAffected()
+	if rowsAffected == 0 {
+		return domain.ErrNotFound
+	}
+
 	return nil
 }
