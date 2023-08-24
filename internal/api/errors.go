@@ -11,14 +11,56 @@ import (
 
 	"github.com/Brix101/budgetto-backend/internal/domain"
 	"github.com/go-playground/validator"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 
 func (a *api) errorResponse(w http.ResponseWriter, _ *http.Request, status int, err error) {
 	var errorResponse domain.ErrResponse
+	statusCode := status // Default status code
+
 
 	log.Println(reflect.TypeOf(err), err)
 	switch typedErr := err.(type) {
+	case *pgconn.PgError:
+		constraintName := typedErr.ConstraintName
+		parts := strings.Split(constraintName, "_")
+		fieldName := "field" // Default field name if constraint name is not in the expected format
+		if len(parts) > 0 {
+			fieldName = parts[len(parts)-1]
+			if fieldName == "key"{
+				fieldName = parts[1]
+			}
+		}
+
+		switch typedErr.Code {
+		case "23505":
+			statusCode = http.StatusBadRequest			
+			message := fmt.Sprintf("The %s you entered is already taken.", fieldName)			
+			errorFields := []domain.ErrField{{
+				Field: fieldName,
+				Message: message,
+			}}
+
+			errorResponse = domain.ErrResponse{
+				Message: "Validation Error",
+				Errors:  errorFields,
+			}
+			
+		// case "23503":
+		// 	statusCode = http.StatusBadRequest
+		// 	// message := fmt.Sprintf("%s is already taken.", strings.Title(fieldName))
+		// 	return statusCode, []ErrorInfo{{Field: fieldName, Message: typedErr.Message}}
+			// Add more cases to handle other PostgreSQL error codes if needed
+			// ...
+		default:
+			statusCode = 500
+			errorResponse = domain.ErrResponse{
+				Message: "Something went wrong!",
+				Errors:  []domain.ErrField{},
+			}
+		}
+
 	case validator.ValidationErrors:
 		fmt.Println("Validation")
 		errorFields := []domain.ErrField{}
@@ -35,7 +77,7 @@ func (a *api) errorResponse(w http.ResponseWriter, _ *http.Request, status int, 
 		}
 	case error:
 		var message string
-		if status == 500{
+		if statusCode == 500{
 			message =  "Something went wrong!"
 		}else{
 			message = typedErr.Error()
@@ -45,13 +87,20 @@ func (a *api) errorResponse(w http.ResponseWriter, _ *http.Request, status int, 
 			Errors:  []domain.ErrField{},
 		}
 
+	default:
+		statusCode = 500
+		errorResponse = domain.ErrResponse{
+			Message: "Something went wrong!",
+			Errors:  []domain.ErrField{},
+		}
+
 	}
 
 	errorResJson, _ := json.Marshal(errorResponse)
 
 	w.Header().Set("X-Budgetto-Error", err.Error())
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
+	w.WriteHeader(statusCode)
 	w.Write(errorResJson)
 }
 

@@ -31,26 +31,26 @@ func (p *postgresUserRepository) fetch(ctx context.Context, query string, args .
 	}
 	defer rows.Close()
 
-	var users []domain.User
+	var usrs []domain.User
 	for rows.Next() {
 
-		var cat domain.User
+		var usr domain.User
 		if err := rows.Scan(
-			&cat.ID,
-			&cat.Name,
-			&cat.Email,
-			&cat.Password,
-			&cat.Bio,
-			&cat.Image,
-			&cat.CreatedAt,
-			&cat.UpdatedAt,
+			&usr.ID,
+			&usr.Name,
+			&usr.Email,
+			&usr.Password,
+			&usr.Bio,
+			&usr.Image,
+			&usr.CreatedAt,
+			&usr.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
-		users = append(users, cat)
+		usrs = append(usrs, usr)
 	}
 
-	return users, nil
+	return usrs, nil
 }
 
 func (p *postgresUserRepository) GetByID(ctx context.Context, id int64) (domain.User, error) {
@@ -70,16 +70,16 @@ func (p *postgresUserRepository) GetByID(ctx context.Context, id int64) (domain.
 			id = $1
 			AND is_deleted = FALSE`
 
-	user, err := p.fetch(ctx, query, id)
+	usr, err := p.fetch(ctx, query, id)
 	if err != nil {
 		return domain.User{}, err
 	}
 
-	if len(user) == 0 {
+	if len(usr) == 0 {
 		return domain.User{}, domain.ErrNotFound
 	}
 	
-	return user[0], nil
+	return usr[0], nil
 }
 
 func (p *postgresUserRepository) GetByEmail(ctx context.Context, email string) (domain.User, error) {
@@ -99,45 +99,47 @@ func (p *postgresUserRepository) GetByEmail(ctx context.Context, email string) (
 			email = $1
 			AND is_deleted = FALSE`
 
-	user, err := p.fetch(ctx, query, email)
+	usr, err := p.fetch(ctx, query, email)
 
 	if err != nil {
 		return domain.User{}, err
 	}
 
-	if len(user) == 0 {
+	if len(usr) == 0 {
 		return domain.User{}, domain.ErrNotFound
 	}
 
-	return user[0], nil
+	return usr[0], nil
 }
 
 
-// func (p *postgresUserRepository) Create(ctx context.Context, cat *domain.User) (*domain.User, error) {
-// 	query := `
-// 		INSERT INTO users (name, note, created_by)
-// 		VALUES ($1, $2, $3)
-// 		RETURNING id, created_at, updated_at`
+func (p *postgresUserRepository) Create(ctx context.Context, usr *domain.User) (*domain.User, error) {
+	query := `
+		INSERT INTO users (name, email, password, bio, image)
+		VALUES ($1, $2, $3, $4, $5)
+		RETURNING id, created_at, updated_at`
 
-// 	ctx, span := spanWithQuery(ctx, p.tracer, query)
-// 	defer span.End()
+	ctx, span := spanWithQuery(ctx, p.tracer, query)
+	defer span.End()
 
-// 	if err := p.conn.QueryRow(
-// 		ctx,
-// 		query,
-// 		cat.Name,
-// 		cat.Note,
-// 		cat.CreatedBy,
-// 	).Scan(
-// 		&cat.ID,
-// 		&cat.CreatedAt,
-// 		&cat.UpdatedAt); err != nil {
-// 		span.SetStatus(codes.Error, "failed inserting users")
-// 		span.RecordError(err)
-// 		return nil, err
-// 	}
-// 	return cat, nil
-// }
+	if err := p.conn.QueryRow(
+		ctx,
+		query,
+		usr.Name,
+		usr.Email,
+		usr.Password,
+		usr.Bio,
+		usr.Image,
+	).Scan(
+		&usr.ID,
+		&usr.CreatedAt,
+		&usr.UpdatedAt); err != nil {
+		span.SetStatus(codes.Error, "failed inserting users")
+		span.RecordError(err)
+		return nil, err
+	}
+	return usr, nil
+}
 
 // func (p *postgresUserRepository) Update(ctx context.Context, cat *domain.User) (*domain.User, error) {
 // 	query := `

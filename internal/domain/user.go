@@ -3,6 +3,8 @@ package domain
 import (
 	"context"
 	"strings"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 type User struct {
@@ -20,18 +22,18 @@ func (u *User) NormalizedName() string {
 	return strings.ToLower(u.Name)
 }
 
-func (u User) HashPassword(password string) bool {
-	if u.Password == password {
-		return true
+func (u *User) HashPassword() error {
+	bytes, err := bcrypt.GenerateFromPassword([]byte(u.Password), 14)
+    if err != nil{
+		return err
 	}
-	return false
+	u.Password = string(bytes)
+	return nil
 }
 
 func (u User) CheckPassword(password string) bool {
-	if u.Password == password {
-		return true
-	}
-	return false
+    err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password))
+    return err == nil
 }
 
 // UserRepository represents the user's repository contract
@@ -42,6 +44,6 @@ type UserRepository interface {
 
 	// CreateOrUpdate(ctx context.Context, usr *User) error
 	// Update(ctx context.Context, usr *User) error
-	// Create(ctx context.Context, usr *User) error
+	Create(ctx context.Context, usr *User) (*User, error)
 	// Delete(ctx context.Context, id int64) error
 }
