@@ -43,7 +43,6 @@ func (a api) signInHandler(w http.ResponseWriter, r *http.Request) {
 
 	validate := validator.New()
 	err = validate.Struct(reqBody)
-
 	if err != nil {
 		a.errorResponse(w, r, 400, err)
 		return
@@ -60,7 +59,12 @@ func (a api) signInHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	usrJSON, err := json.Marshal(usr)
+	usrToken, err := usr.GenerateClaims()
+	if err != nil {
+		a.errorResponse(w, r, 500, err)
+	}
+
+	usrJSON, err := json.Marshal(usrToken)
 	if err != nil {
 		a.errorResponse(w, r, 500, err)
 		return

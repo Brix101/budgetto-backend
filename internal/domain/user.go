@@ -3,7 +3,9 @@ package domain
 import (
 	"context"
 	"strings"
+	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -34,6 +36,40 @@ func (u *User) HashPassword() error {
 func (u User) CheckPassword(password string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password))
 	return err == nil
+}
+
+type userClaims struct {
+	Sub   int    `json:"sub"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
+	jwt.RegisteredClaims
+}
+
+type userToken struct {
+	User
+	Token string `json:"token"`
+}
+
+func (u User) GenerateClaims() (*userToken, error) {
+	claims := userClaims{
+		int(u.ID),
+		u.Name,
+		u.Email,
+		jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 72)),
+		},
+	}
+
+	// Create token with claims
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	// Generate encoded token and send it as response.
+	t, err := token.SignedString([]byte("secret"))
+	if err != nil {
+		return nil, err
+	}
+
+	return &userToken{u, t}, nil
 }
 
 // UserRepository represents the user's repository contract
