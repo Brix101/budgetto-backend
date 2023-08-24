@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	"github.com/Brix101/budgetto-backend/internal/domain"
@@ -16,7 +17,7 @@ type postgresCategoryRepository struct {
 }
 
 func NewPostgresCategory(conn Connection) domain.CategoryRepository {
-	tracer := otel.Tracer("db:postgres:catounts")
+	tracer := otel.Tracer("db:postgres:categories")
 	return &postgresCategoryRepository{conn: conn, tracer: tracer}
 }
 
@@ -26,11 +27,13 @@ func (p *postgresCategoryRepository) fetch(ctx context.Context, query string, ar
 
 	rows, err := p.conn.Query(ctx, query, args...)
 	if err != nil {
-		span.SetStatus(codes.Error, "failed querying catounts")
+		span.SetStatus(codes.Error, "failed querying categories")
 		span.RecordError(err)
 		return nil, err
 	}
 	defer rows.Close()
+
+	fmt.Println(rows.Values())
 
 	var cats []domain.Category
 	for rows.Next() {
@@ -45,8 +48,6 @@ func (p *postgresCategoryRepository) fetch(ctx context.Context, query string, ar
 		); err != nil {
 			return nil, err
 		}
-
-		log.Println(cat)
 		cats = append(cats, cat)
 	}
 	return cats, nil
@@ -71,7 +72,7 @@ func (p *postgresCategoryRepository) GetByID(ctx context.Context, id int64) (dom
 	return cats[0], nil
 }
 
-func (p *postgresCategoryRepository) GetByUserID(ctx context.Context, id int64) ([]domain.Category, error) {
+func (p *postgresCategoryRepository) GetByUserID(ctx context.Context, user_id int64) ([]domain.Category, error) {
 	query := `
 		SELECT *
 		FROM categories
@@ -79,7 +80,7 @@ func (p *postgresCategoryRepository) GetByUserID(ctx context.Context, id int64) 
 		OR is_deleted = false
 		ORDER BY name ASC`
 
-	return p.fetch(ctx, query, id)
+	return p.fetch(ctx, query, user_id)
 }
 
 func (p *postgresCategoryRepository) Create(ctx context.Context, cat *domain.Category) (*domain.Category, error) {
@@ -101,7 +102,7 @@ func (p *postgresCategoryRepository) Create(ctx context.Context, cat *domain.Cat
 		&cat.ID,
 		&cat.CreatedAt,
 		&cat.UpdatedAt); err != nil {
-		span.SetStatus(codes.Error, "failed inserting catount")
+		span.SetStatus(codes.Error, "failed inserting categories")
 		span.RecordError(err)
 		return nil, err
 	}

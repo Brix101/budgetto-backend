@@ -20,23 +20,23 @@ func (cr api) CategoryRoutes() chi.Router {
 }
 
 func (cr api) categoryListHandler(w http.ResponseWriter, r *http.Request) {
-	data := map[string]string{
-		"status": "category",
-	}
-
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	categories, err := cr.categoryRepo.GetByUserID(ctx, 1)
+	categories, err := cr.categoryRepo.GetByUserID(ctx, 5)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	log.Println(categories)
+	catsJson, err := json.Marshal(categories)
+	if err != nil {
+		cr.errorResponse(w, r, 500, err)
+		return
+	}
 
-	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(data)
+	w.WriteHeader(http.StatusOK)
+	w.Write(catsJson)
 }
 
 func (cr api) categoryCreateHandler(w http.ResponseWriter, r *http.Request) {
@@ -72,7 +72,7 @@ func (cr api) categoryCreateHandler(w http.ResponseWriter, r *http.Request) {
 		cr.errorResponse(w, r, 500, err)
 		return
 	}
-	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 	w.Write(catJson)
 }
