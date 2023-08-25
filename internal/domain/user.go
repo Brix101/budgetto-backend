@@ -38,7 +38,7 @@ func (u User) CheckPassword(password string) bool {
 	return err == nil
 }
 
-type userClaims struct {
+type UserClaims struct {
 	Sub   int    `json:"sub"`
 	Name  string `json:"name"`
 	Email string `json:"email"`
@@ -51,7 +51,7 @@ type userToken struct {
 }
 
 func (u User) GenerateClaims() (*userToken, error) {
-	claims := userClaims{
+	claims := UserClaims{
 		int(u.ID),
 		u.Name,
 		u.Email,

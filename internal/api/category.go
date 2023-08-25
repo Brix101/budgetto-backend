@@ -7,12 +7,15 @@ import (
 	"strconv"
 
 	"github.com/Brix101/budgetto-backend/internal/domain"
+	"github.com/Brix101/budgetto-backend/internal/middlwares"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator"
 )
 
 func (a api) CategoryRoutes() chi.Router {
 	r := chi.NewRouter()
+
+	r.Use(middlwares.JWTMiddleware)
 
 	r.Get("/", a.categoryListHandler)
 	r.Post("/", a.categoryCreateHandler)
@@ -32,14 +35,15 @@ func (a api) categoryListHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	cats, err := a.categoryRepo.GetByUserID(ctx, 5)
+	user := r.Context().Value("user").(*domain.UserClaims)
+
+	cats, err := a.categoryRepo.GetByUserID(ctx, int64(user.Sub))
 	if err != nil {		
 		a.errorResponse(w, r, 500, err)
 		return
 	}
 
-
-	catsJSON, err := json.Marshal(cats)
+	resJSON, err := json.Marshal(cats)
 	if err != nil {
 		a.errorResponse(w, r, 500, err)
 		return
@@ -47,7 +51,7 @@ func (a api) categoryListHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write(catsJSON)
+	w.Write(resJSON)
 }
 
 func (a api) categoryGetHandler(w http.ResponseWriter, r *http.Request) {
