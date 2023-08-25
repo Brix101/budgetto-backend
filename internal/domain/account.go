@@ -19,7 +19,7 @@ type AccountRepository interface {
 	// GetAll(ctx context.Context) ([]Account, error)
 	//
 	// CreateOrUpdate(ctx context.Context, acc *Account) error
-	// Update(ctx context.Context, acc *Account) error
 	Create(ctx context.Context, acc *Account) error
-	// Delete(ctx context.Context, id int64) error
+	Update(ctx context.Context, acc *Account) (*Account, error)
+	Delete(ctx context.Context, id int64) error
 }

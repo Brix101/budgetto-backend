@@ -103,3 +103,63 @@ func (p *postgresAccountRepository) Create(ctx context.Context, acc *domain.Acco
 
 	return nil
 }
+
+func (p *postgresAccountRepository) Update(ctx context.Context, acc *domain.Account) (*domain.Account, error) {
+	query := `
+		UPDATE accounts
+		SET 
+			name = $2,
+			balance = $3,
+			note = $4,
+			updated_at = NOW()
+		WHERE 
+			id = $1
+		RETURNING updated_at`
+
+	ctx, span := spanWithQuery(ctx, p.tracer, query)
+	defer span.End()
+
+	row := p.conn.QueryRow(
+		ctx,
+		query,
+		acc.ID,
+		acc.Name,
+		acc.Balance,
+		acc.Note,
+	)
+
+	if err := row.Scan(&acc.UpdatedAt); err != nil {
+		span.SetStatus(codes.Error, "failed to update account")
+		span.RecordError(err)
+		return nil, err
+	}
+
+	return acc, nil
+}
+
+func (p *postgresAccountRepository) Delete(ctx context.Context, id int64) error {
+	query := `
+		UPDATE accounts
+		SET 
+			is_deleted = TRUE,
+			updated_at = NOW()
+		WHERE 
+			id = $1`
+
+	ctx, span := spanWithQuery(ctx, p.tracer, query)
+	defer span.End()
+
+	result, err := p.conn.Exec(ctx, query, id)
+	if err != nil {
+		span.SetStatus(codes.Error, "failed to delete account")
+		span.RecordError(err)
+		return err
+	}
+
+	rowsAffected := result.RowsAffected()
+	if rowsAffected == 0 {
+		return domain.ErrNotFound
+	}
+
+	return nil
+}
