@@ -43,11 +43,6 @@ func (a api) categoryListHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err != nil {
-		a.errorResponse(w, r, 500, err)
-		return
-	}
-
 	resJSON, err := json.Marshal(cats)
 	if err != nil {
 		a.errorResponse(w, r, 500, err)
