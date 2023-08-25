@@ -27,8 +27,8 @@ func (a api) CategoryRoutes() chi.Router {
 }
 
 type updateCategoryRequest struct {
-	Name   string 	`json:"name"`
-	Note   string 	`json:"note"`
+	Name string `json:"name"`
+	Note string `json:"note"`
 }
 
 func (a api) categoryListHandler(w http.ResponseWriter, r *http.Request) {
@@ -38,7 +38,12 @@ func (a api) categoryListHandler(w http.ResponseWriter, r *http.Request) {
 	user := r.Context().Value("user").(*domain.UserClaims)
 
 	cats, err := a.categoryRepo.GetByUserID(ctx, int64(user.Sub))
-	if err != nil {		
+	if err != nil {
+		a.errorResponse(w, r, 500, err)
+		return
+	}
+
+	if err != nil {
 		a.errorResponse(w, r, 500, err)
 		return
 	}
@@ -59,21 +64,20 @@ func (a api) categoryGetHandler(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	id, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil {		
+	if err != nil {
 		a.errorResponse(w, r, 500, err)
 		return
 	}
 
 	cat, err := a.categoryRepo.GetByID(ctx, int64(id))
-	if err != nil {		
+	if err != nil {
 		status := 500
-		if err.Error() == domain.ErrNotFound.Error(){
+		if err.Error() == domain.ErrNotFound.Error() {
 			status = 404
 		}
 		a.errorResponse(w, r, status, err)
 		return
 	}
-
 
 	catsJSON, err := json.Marshal(cat)
 	if err != nil {
@@ -129,21 +133,21 @@ func (a api) categoryUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	id, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil {		
+	if err != nil {
 		a.errorResponse(w, r, 500, err)
 		return
 	}
 
 	cat, err := a.categoryRepo.GetByID(ctx, int64(id))
-	if err != nil {		
+	if err != nil {
 		status := 500
-		if err.Error() == domain.ErrNotFound.Error(){
+		if err.Error() == domain.ErrNotFound.Error() {
 			status = 404
 		}
 		a.errorResponse(w, r, status, err)
 		return
 	}
-	
+
 	var upCat updateCategoryRequest
 	if err := json.NewDecoder(r.Body).Decode(&upCat); err != nil {
 		a.errorResponse(w, r, 422, err)
@@ -151,11 +155,11 @@ func (a api) categoryUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	if upCat.Name != ""{
+	if upCat.Name != "" {
 		cat.Name = upCat.Name
 	}
 
-	if upCat.Note != ""{
+	if upCat.Note != "" {
 		cat.Note = upCat.Note
 	}
 
@@ -180,7 +184,7 @@ func (a api) categoryDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	id, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil {		
+	if err != nil {
 		a.errorResponse(w, r, 500, err)
 		return
 	}
@@ -188,7 +192,7 @@ func (a api) categoryDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	err = a.categoryRepo.Delete(ctx, int64(id))
 	if err != nil {
 		status := 500
-		if err.Error() == domain.ErrNotFound.Error(){
+		if err.Error() == domain.ErrNotFound.Error() {
 			status = 404
 		}
 		a.errorResponse(w, r, status, err)
@@ -202,4 +206,3 @@ func (a api) categoryDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(data)
 }
-

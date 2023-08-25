@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"log"
 
 	"github.com/Brix101/budgetto-backend/internal/domain"
 	"go.opentelemetry.io/otel"
@@ -101,7 +102,7 @@ func (p *postgresCategoryRepository) GetByUserID(ctx context.Context, created_by
 		return []domain.Category{}, err
 	}
 
-	if len(cats) <= 0{		
+	if len(cats) <= 0 {
 		return []domain.Category{}, nil
 	}
 
@@ -161,7 +162,7 @@ func (p *postgresCategoryRepository) Create(ctx context.Context, cat *domain.Cat
 		span.RecordError(err)
 		return nil, err
 	}
-	
+
 	return cat, nil
 }
 
@@ -220,5 +221,52 @@ func (p *postgresCategoryRepository) Delete(ctx context.Context, id int64) error
 		return domain.ErrNotFound
 	}
 
+	return nil
+}
+
+func (p *postgresCategoryRepository) Seed(ctx context.Context) error {
+	t_query := `
+		SELECT COUNT(*) FROM categories`
+
+	t_ctx, t_span := spanWithQuery(ctx, p.tracer, t_query)
+	defer t_span.End()
+
+	result := p.conn.QueryRow(t_ctx, t_query)
+
+	var count int
+	result.Scan(&count)
+
+	if count <= 0 {
+		query := `
+			INSERT INTO categories (name, note)
+			VALUES 
+			('Health Care', 'This category can include expenses for health insurance, doctor visits, prescriptions, and other medical expenses.'),
+			('Savings', 'This category can include savings towards retirement, emergency funds, or other financial goals.'),
+			('Food', 'This category can include groceries, dining out, and snacks.'),
+			('Utilities', 'This category can include expenses for electricity, gas, water, internet, and phone.'),
+			('Transportation', 'This category can include car payments, gas, car insurance, maintenance and repairs, and public transportation expenses.'),
+			('Debt Payments', 'This category can include payments towards credit card debt, student loans, or other debts.'),
+			('Personal Care', 'This category can include items such as haircuts, personal grooming products, and gym memberships.'),
+			('Entertainment', 'This category can include expenses for movies, concerts, hobbies, and vacations.'),
+			('Housing', 'This category can include mortgage or rent payments, property taxes, homeowners or renters insurance, repairs and maintenance, and utilities.');		
+			`
+		ctx, span := spanWithQuery(ctx, p.tracer, query)
+		defer span.End()
+		result, err := p.conn.Exec(ctx, query)
+		if err != nil {
+			span.SetStatus(codes.Error, "failed to seed category")
+			span.RecordError(err)
+			log.Println("❌❌❌Failed to seed category:", err.Error())
+			return err
+		}
+
+		rowsAffected := result.RowsAffected()
+		if rowsAffected >= 1 {
+			log.Println("✅✅✅ Category seeder executed successfully.")
+		}
+		return nil
+	}
+
+	log.Println("👍👍👍 Category records already exist. Skipping the seeder.")
 	return nil
 }
