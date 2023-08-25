@@ -6,12 +6,14 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/Brix101/budgetto-backend/config"
 	"github.com/Brix101/budgetto-backend/internal/domain"
 	"github.com/golang-jwt/jwt/v5"
 )
 
 func JWTMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		env := config.GetConfig()
 		tokenString := extractTokenFromHeader(r)
 		if tokenString == "" {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
@@ -21,7 +23,7 @@ func JWTMiddleware(next http.Handler) http.Handler {
 		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 			// You should implement your own logic to validate the token and return the appropriate key
 			// For example, you could use a secret key or a public key
-			return []byte("secret"), nil
+			return []byte(env.TOKEN_SECRET), nil
 		})
 		
 

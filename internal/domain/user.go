@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Brix101/budgetto-backend/config"
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -51,6 +52,7 @@ type userToken struct {
 }
 
 func (u User) GenerateClaims() (*userToken, error) {
+	env :=config.GetConfig()
 	claims := UserClaims{
 		int(u.ID),
 		u.Name,
@@ -64,7 +66,7 @@ func (u User) GenerateClaims() (*userToken, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 	// Generate encoded token and send it as response.
-	t, err := token.SignedString([]byte("secret"))
+	t, err := token.SignedString([]byte(env.TOKEN_SECRET))
 	if err != nil {
 		return nil, err
 	}
