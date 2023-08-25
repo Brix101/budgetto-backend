@@ -90,14 +90,19 @@ func (p *postgresCategoryRepository) GetByUserID(ctx context.Context, created_by
 		FROM
 			categories
 		WHERE
-			created_by = $1
-			AND is_deleted = FALSE
+			created_by IS NULL OR
+			created_by = $1 AND
+			is_deleted = FALSE
 		ORDER BY
 			name ASC`
 
 	cats, err := p.fetch(ctx, query, created_by)
 	if err != nil {
 		return []domain.Category{}, err
+	}
+
+	if len(cats) <= 0{		
+		return []domain.Category{}, nil
 	}
 
 	return cats, nil
@@ -156,6 +161,7 @@ func (p *postgresCategoryRepository) Create(ctx context.Context, cat *domain.Cat
 		span.RecordError(err)
 		return nil, err
 	}
+	
 	return cat, nil
 }
 
