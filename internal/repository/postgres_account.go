@@ -53,9 +53,19 @@ func (p *postgresAccountRepository) fetch(ctx context.Context, query string, arg
 
 func (p *postgresAccountRepository) GetByID(ctx context.Context, id int64) (domain.Account, error) {
 	query := `
-		SELECT *
-		FROM accounts
-		WHERE id = $1 AND is_deleted = false`
+		SELECT
+			id,
+			name,
+            balance,
+			note,
+			created_by,
+			created_at,
+			updated_at
+		FROM 
+            accounts
+		WHERE 
+            id = $1 AND 
+            is_deleted = FALSE`
 
 	accs, err := p.fetch(ctx, query, id)
 	if err != nil {
@@ -68,20 +78,40 @@ func (p *postgresAccountRepository) GetByID(ctx context.Context, id int64) (doma
 	return accs[0], nil
 }
 
-func (p *postgresAccountRepository) GetByUserID(ctx context.Context, id int64) ([]domain.Account, error) {
+func (p *postgresAccountRepository) GetByUserID(ctx context.Context, created_by int64) ([]domain.Account, error) {
 	query := `
-		SELECT *
-		FROM accounts
-		WHERE user_id = $1 AND is_deleted = false
-		ORDER BY name ASC`
+		SELECT
+			id,
+			name,
+            balance,
+			note,
+			created_by,
+			created_at,
+			updated_at
+		FROM
+			accounts
+		WHERE
+			created_by = $1 AND
+			is_deleted = FALSE
+		ORDER BY
+			name ASC`
 
-	return p.fetch(ctx, query, id)
+	cats, err := p.fetch(ctx, query, created_by)
+	if err != nil {
+		return []domain.Account{}, err
+	}
+
+	if len(cats) <= 0 {
+		return []domain.Account{}, nil
+	}
+
+	return cats, nil
 }
 
 func (p *postgresAccountRepository) Create(ctx context.Context, acc *domain.Account) error {
 	query := `
 		INSERT INTO accounts
-			(name, balance, note, user_id)
+			(name, balance, note, created_by)
 		VALUES ($1, $2, $3, $4)
 		RETURNING id`
 

@@ -16,11 +16,13 @@ type api struct {
 
 	categoryRepo domain.CategoryRepository
 	userRepo     domain.UserRepository
+	accountRepo  domain.AccountRepository
 }
 
 func NewAPI(pool *pgxpool.Pool) *api {
 	categoryRepo := repository.NewPostgresCategory(pool)
 	userRepo := repository.NewPostgresUser(pool)
+	accountRepo := repository.NewPostgresAccount(pool)
 
 	client := &http.Client{}
 
@@ -29,6 +31,7 @@ func NewAPI(pool *pgxpool.Pool) *api {
 
 		categoryRepo: categoryRepo,
 		userRepo:     userRepo,
+		accountRepo:  accountRepo,
 	}
 }
 
@@ -46,6 +49,7 @@ func (a *api) Routes() *chi.Mux {
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Mount("/health", a.HealthRoutes())
 		r.Mount("/categories", a.CategoryRoutes())
+		r.Mount("/accounts", a.AccountRoutes())
 		r.Mount("/auth", a.AuthRoutes())
 		r.Mount("/users", a.UserRoutes())
 	})
