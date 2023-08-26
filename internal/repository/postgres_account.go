@@ -32,7 +32,7 @@ func (p *postgresAccountRepository) fetch(ctx context.Context, query string, arg
 	}
 	defer rows.Close()
 
-	var accs []domain.Account
+	accs := []domain.Account{}
 	for rows.Next() {
 		var acc domain.Account
 		if err := rows.Scan(
@@ -96,16 +96,12 @@ func (p *postgresAccountRepository) GetByUserID(ctx context.Context, created_by 
 		ORDER BY
 			name ASC`
 
-	cats, err := p.fetch(ctx, query, created_by)
+	accs, err := p.fetch(ctx, query, created_by)
 	if err != nil {
 		return []domain.Account{}, err
 	}
 
-	if len(cats) <= 0 {
-		return []domain.Account{}, nil
-	}
-
-	return cats, nil
+	return accs, nil
 }
 
 func (p *postgresAccountRepository) Create(ctx context.Context, acc *domain.Account) (*domain.Account, error) {

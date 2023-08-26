@@ -15,7 +15,7 @@ type Account struct {
 // AccountRepository represents the account's repository contract
 type AccountRepository interface {
 	GetByID(ctx context.Context, id int64) (Account, error)
-	GetByUserID(ctx context.Context, id int64) ([]Account, error)
+	GetByUserID(ctx context.Context, user_id int64) ([]Account, error)
 	// GetAll(ctx context.Context) ([]Account, error)
 	//
 	// CreateOrUpdate(ctx context.Context, acc *Account) error

@@ -31,7 +31,7 @@ func (p *postgresUserRepository) fetch(ctx context.Context, query string, args .
 	}
 	defer rows.Close()
 
-	var usrs []domain.User
+	usrs := []domain.User{}
 	for rows.Next() {
 
 		var usr domain.User
@@ -78,7 +78,7 @@ func (p *postgresUserRepository) GetByID(ctx context.Context, id int64) (domain.
 	if len(usr) == 0 {
 		return domain.User{}, domain.ErrNotFound
 	}
-	
+
 	return usr[0], nil
 }
 
@@ -100,7 +100,6 @@ func (p *postgresUserRepository) GetByEmail(ctx context.Context, email string) (
 			AND is_deleted = FALSE`
 
 	usr, err := p.fetch(ctx, query, email)
-
 	if err != nil {
 		return domain.User{}, err
 	}
@@ -111,7 +110,6 @@ func (p *postgresUserRepository) GetByEmail(ctx context.Context, email string) (
 
 	return usr[0], nil
 }
-
 
 func (p *postgresUserRepository) Create(ctx context.Context, usr *domain.User) (*domain.User, error) {
 	query := `
@@ -144,11 +142,11 @@ func (p *postgresUserRepository) Create(ctx context.Context, usr *domain.User) (
 // func (p *postgresUserRepository) Update(ctx context.Context, cat *domain.User) (*domain.User, error) {
 // 	query := `
 // 		UPDATE users
-// 		SET 
+// 		SET
 // 			name = $2,
 // 			note = $3,
 // 			updated_at = NOW()
-// 		WHERE 
+// 		WHERE
 // 			id = $1
 // 		RETURNING updated_at`
 
@@ -161,8 +159,8 @@ func (p *postgresUserRepository) Create(ctx context.Context, usr *domain.User) (
 // 		cat.ID,
 // 		cat.Name,
 // 		cat.Note,
-// 	); 
-	
+// 	);
+
 // 	if err := row.Scan(&cat.UpdatedAt); err != nil {
 // 		span.SetStatus(codes.Error, "failed to update User")
 // 		span.RecordError(err)
@@ -175,10 +173,10 @@ func (p *postgresUserRepository) Create(ctx context.Context, usr *domain.User) (
 // func (p *postgresUserRepository) Delete(ctx context.Context, id int64) error {
 // 	query := `
 // 		UPDATE users
-// 		SET 
+// 		SET
 // 			is_deleted = TRUE,
 // 			updated_at = NOW()
-// 		WHERE 
+// 		WHERE
 // 			id = $1`
 
 // 	ctx, span := spanWithQuery(ctx, p.tracer, query)

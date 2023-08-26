@@ -32,7 +32,7 @@ func (p *postgresCategoryRepository) fetch(ctx context.Context, query string, ar
 	}
 	defer rows.Close()
 
-	var cats []domain.Category
+	cats := []domain.Category{}
 	for rows.Next() {
 
 		var cat domain.Category
@@ -100,10 +100,6 @@ func (p *postgresCategoryRepository) GetByUserID(ctx context.Context, created_by
 	cats, err := p.fetch(ctx, query, created_by)
 	if err != nil {
 		return []domain.Category{}, err
-	}
-
-	if len(cats) <= 0 {
-		return []domain.Category{}, nil
 	}
 
 	return cats, nil
