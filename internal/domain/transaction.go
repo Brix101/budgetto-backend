@@ -41,11 +41,11 @@ type Transaction struct {
 // TransactionRepository represents the transactions repository contract
 type TransactionRepository interface {
 	GetByID(ctx context.Context, id int64) (Transaction, error)
-	GetByUser(ctx context.Context, id int64) ([]Transaction, error)
-	GetAll(ctx context.Context) ([]Transaction, error)
+	GetByUserID(ctx context.Context, user_id int64) ([]Transaction, error)
+	// GetAll(ctx context.Context) ([]Transaction, error)
 
-	CreateOrUpdate(ctx context.Context, tra *Transaction) error
-	Update(ctx context.Context, tra *Transaction) error
-	Create(ctx context.Context, tra *Transaction) error
+	// CreateOrUpdate(ctx context.Context, tra *Transaction) error
+	Update(ctx context.Context, tra *Transaction) (*Transaction, error)
+	Create(ctx context.Context, tra *Transaction) (*Transaction, error)
 	Delete(ctx context.Context, id int64) error
 }

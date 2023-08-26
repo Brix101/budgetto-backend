@@ -104,7 +104,7 @@ func (p *postgresBudgetRepository) Create(ctx context.Context, bud *domain.Budge
 	query := `
 		INSERT INTO budgets
 			(amount, category_id, created_by)
-		VALUES ($1, $2, $3, $4)
+		VALUES ($1, $2, $3)
 		RETURNING id, created_at, updated_at`
 
 	ctx, span := spanWithQuery(ctx, p.tracer, query)
