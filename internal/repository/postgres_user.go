@@ -139,61 +139,66 @@ func (p *postgresUserRepository) Create(ctx context.Context, usr *domain.User) (
 	return usr, nil
 }
 
-// func (p *postgresUserRepository) Update(ctx context.Context, cat *domain.User) (*domain.User, error) {
-// 	query := `
-// 		UPDATE users
-// 		SET
-// 			name = $2,
-// 			note = $3,
-// 			updated_at = NOW()
-// 		WHERE
-// 			id = $1
-// 		RETURNING updated_at`
+func (p *postgresUserRepository) Update(ctx context.Context, usr *domain.User) (*domain.User, error) {
+	query := `
+		UPDATE users
+		SET
+			name = $2,
+			email = $3,
+			password = $4,
+			bio = $5,
+			image = $6,
+			updated_at = NOW()
+		WHERE
+			id = $1
+		RETURNING updated_at`
 
-// 	ctx, span := spanWithQuery(ctx, p.tracer, query)
-// 	defer span.End()
+	ctx, span := spanWithQuery(ctx, p.tracer, query)
+	defer span.End()
 
-// 	row := p.conn.QueryRow(
-// 		ctx,
-// 		query,
-// 		cat.ID,
-// 		cat.Name,
-// 		cat.Note,
-// 	);
+	row := p.conn.QueryRow(
+		ctx,
+		query,
+		usr.ID,
+		usr.Name,
+		usr.Email,
+		usr.Password,
+		usr.Bio,
+		usr.Image,
+	)
 
-// 	if err := row.Scan(&cat.UpdatedAt); err != nil {
-// 		span.SetStatus(codes.Error, "failed to update User")
-// 		span.RecordError(err)
-// 		return nil, err
-// 	}
+	if err := row.Scan(&usr.UpdatedAt); err != nil {
+		span.SetStatus(codes.Error, "failed to update User")
+		span.RecordError(err)
+		return nil, err
+	}
 
-// 	return cat, nil
-// }
+	return usr, nil
+}
 
-// func (p *postgresUserRepository) Delete(ctx context.Context, id int64) error {
-// 	query := `
-// 		UPDATE users
-// 		SET
-// 			is_deleted = TRUE,
-// 			updated_at = NOW()
-// 		WHERE
-// 			id = $1`
+func (p *postgresUserRepository) Delete(ctx context.Context, id int64) error {
+	query := `
+		UPDATE users
+		SET
+			is_deleted = TRUE,
+			updated_at = NOW()
+		WHERE
+			id = $1`
 
-// 	ctx, span := spanWithQuery(ctx, p.tracer, query)
-// 	defer span.End()
+	ctx, span := spanWithQuery(ctx, p.tracer, query)
+	defer span.End()
 
-// 	result , err := p.conn.Exec(ctx, query, id);
+	result, err := p.conn.Exec(ctx, query, id)
+	if err != nil {
+		span.SetStatus(codes.Error, "failed to delete User")
+		span.RecordError(err)
+		return err
+	}
 
-// 	if err != nil {
-// 		span.SetStatus(codes.Error, "failed to delete User")
-// 		span.RecordError(err)
-// 		return err
-// 	}
+	rowsAffected := result.RowsAffected()
+	if rowsAffected == 0 {
+		return domain.ErrNotFound
+	}
 
-// 	rowsAffected := result.RowsAffected()
-// 	if rowsAffected == 0 {
-// 		return domain.ErrNotFound
-// 	}
-
-// 	return nil
-// }
+	return nil
+}

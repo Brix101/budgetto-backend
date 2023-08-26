@@ -52,7 +52,7 @@ type userToken struct {
 }
 
 func (u User) GenerateClaims() (*userToken, error) {
-	env :=config.GetConfig()
+	env := config.GetConfig()
 	claims := UserClaims{
 		int(u.ID),
 		u.Name,
@@ -81,7 +81,7 @@ type UserRepository interface {
 	// GetAll(ctx context.Context) ([]User, error)
 
 	// CreateOrUpdate(ctx context.Context, usr *User) error
-	// Update(ctx context.Context, usr *User) error
+	Update(ctx context.Context, usr *User) (*User, error)
 	Create(ctx context.Context, usr *User) (*User, error)
-	// Delete(ctx context.Context, id int64) error
+	Delete(ctx context.Context, id int64) error
 }
