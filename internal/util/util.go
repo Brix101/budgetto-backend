@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"go.uber.org/zap"
 )
 
 func NewDatabasePool(ctx context.Context, database_url string, maxConns int) *pgxpool.Pool {
@@ -37,4 +39,18 @@ func NewDatabasePool(ctx context.Context, database_url string, maxConns int) *pg
 	}
 
 	return pool
+}
+
+func NewLogger(service string) *zap.Logger {
+	env := os.Getenv("ENV")
+	logger, _ := zap.NewProduction(zap.Fields(
+		zap.String("env", env),
+		zap.String("service", service),
+	))
+
+	if env == "" || env == "development" {
+		logger, _ = zap.NewDevelopment()
+	}
+
+	return logger
 }

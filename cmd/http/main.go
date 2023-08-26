@@ -6,12 +6,14 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 
 	"github.com/Brix101/budgetto-backend/config"
 	"github.com/Brix101/budgetto-backend/internal/api"
 	"github.com/Brix101/budgetto-backend/internal/util"
+	"go.uber.org/zap"
 )
 
 func main() {
@@ -24,11 +26,14 @@ func main() {
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 
+	logger := util.NewLogger("api")
+	defer func() { _ = logger.Sync() }()
+
 	db := util.NewDatabasePool(ctx, env.DATABASE_URL, 16)
 
 	defer db.Close()
 
-	api := api.NewAPI(db)
+	api := api.NewAPI(ctx, logger, db)
 	server := api.Server(env.PORT)
 
 	go func() {
@@ -57,6 +62,9 @@ func main() {
 	if err != nil && err != http.ErrServerClosed {
 		log.Fatal(err)
 	}
+
+	port, _ := strconv.Atoi(env.PORT)
+	logger.Info("started api", zap.Int("port", port))
 
 	// Wait for server context to be stopped
 	<-ctx.Done()

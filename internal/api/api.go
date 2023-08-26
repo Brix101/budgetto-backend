@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -9,9 +10,11 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"go.uber.org/zap"
 )
 
 type api struct {
+	logger     *zap.Logger
 	httpClient *http.Client
 
 	categoryRepo domain.CategoryRepository
@@ -19,7 +22,7 @@ type api struct {
 	accountRepo  domain.AccountRepository
 }
 
-func NewAPI(pool *pgxpool.Pool) *api {
+func NewAPI(_ context.Context, logger *zap.Logger, pool *pgxpool.Pool) *api {
 	categoryRepo := repository.NewPostgresCategory(pool)
 	userRepo := repository.NewPostgresUser(pool)
 	accountRepo := repository.NewPostgresAccount(pool)
@@ -27,6 +30,7 @@ func NewAPI(pool *pgxpool.Pool) *api {
 	client := &http.Client{}
 
 	return &api{
+		logger:     logger,
 		httpClient: client,
 
 		categoryRepo: categoryRepo,
