@@ -108,12 +108,12 @@ func (p *postgresAccountRepository) GetByUserID(ctx context.Context, created_by 
 	return cats, nil
 }
 
-func (p *postgresAccountRepository) Create(ctx context.Context, acc *domain.Account) error {
+func (p *postgresAccountRepository) Create(ctx context.Context, acc *domain.Account) (*domain.Account, error) {
 	query := `
 		INSERT INTO accounts
 			(name, balance, note, created_by)
 		VALUES ($1, $2, $3, $4)
-		RETURNING id`
+		RETURNING id, created_at, updated_at`
 
 	ctx, span := spanWithQuery(ctx, p.tracer, query)
 	defer span.End()
@@ -125,13 +125,16 @@ func (p *postgresAccountRepository) Create(ctx context.Context, acc *domain.Acco
 		acc.Balance,
 		acc.Note,
 		acc.CreatedBy,
-	).Scan(&acc.ID); err != nil {
+	).Scan(
+		&acc.ID,
+		&acc.CreatedAt,
+		&acc.UpdatedAt); err != nil {
 		span.SetStatus(codes.Error, "failed inserting account")
 		span.RecordError(err)
-		return err
+		return nil, err
 	}
 
-	return nil
+	return acc, nil
 }
 
 func (p *postgresAccountRepository) Update(ctx context.Context, acc *domain.Account) (*domain.Account, error) {

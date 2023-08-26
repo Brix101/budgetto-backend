@@ -111,6 +111,7 @@ func (a api) categoryCreateHandler(w http.ResponseWriter, r *http.Request) {
 	cat, err := a.categoryRepo.Create(ctx, &newCat)
 	if err != nil {
 		a.errorResponse(w, r, 500, err)
+		return
 	}
 
 	catJSON, err := json.Marshal(cat)

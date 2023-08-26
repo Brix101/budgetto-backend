@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 	"reflect"
-	"strconv"
 	"strings"
 
 	"github.com/Brix101/budgetto-backend/internal/domain"
@@ -73,7 +72,7 @@ func (a *api) errorResponse(w http.ResponseWriter, _ *http.Request, status int, 
 			Message: "Validation Error",
 			Errors:  errorFields,
 		}
-		
+
 	case error:
 		var message string
 		if statusCode == 500 {
@@ -105,17 +104,18 @@ func (a *api) errorResponse(w http.ResponseWriter, _ *http.Request, status int, 
 
 func GetValidationErrorMessage(err validator.FieldError) string {
 	fieldName := strings.ToLower(err.Field())
+
 	switch err.Tag() {
 	case "required":
 		return fmt.Sprintf("%s field is required.", fieldName)
 	case "min":
-		minValue, _ := strconv.Atoi(err.Param())
-		return fmt.Sprintf("%s should be at least %d characters long.", fieldName, minValue)
+		return fmt.Sprintf("%s should be at least %s characters long.", fieldName, err.Param())
 	case "max":
-		maxValue, _ := strconv.Atoi(err.Param())
-		return fmt.Sprintf("%s should be at most %d characters long.", fieldName, maxValue)
+		return fmt.Sprintf("%s should be at most %s characters long.", fieldName, err.Param())
 	case "email":
 		return "Enter a valid email address."
+	case "gte":
+		return fmt.Sprintf("%s should be greater than %s.", fieldName, err.Param())
 	// Add more cases for other validation tags as needed.
 	default:
 		return "Invalid input."

@@ -62,6 +62,7 @@ func (a api) signInHandler(w http.ResponseWriter, r *http.Request) {
 	usrToken, err := usr.GenerateClaims()
 	if err != nil {
 		a.errorResponse(w, r, 500, err)
+		return
 	}
 
 	usrJSON, err := json.Marshal(usrToken)

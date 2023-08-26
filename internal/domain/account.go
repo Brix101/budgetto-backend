@@ -6,8 +6,8 @@ type Account struct {
 	Base
 
 	// account fields
-	Name      string  `json:"name"`
-	Balance   float64 `json:"balance"`
+	Name      string  `json:"name" validate:"required"`
+	Balance   float64 `json:"balance" validate:"gte=0"`
 	Note      string  `json:"note,omitempty"`
 	CreatedBy uint    `json:"-"`
 }
@@ -19,7 +19,7 @@ type AccountRepository interface {
 	// GetAll(ctx context.Context) ([]Account, error)
 	//
 	// CreateOrUpdate(ctx context.Context, acc *Account) error
-	Create(ctx context.Context, acc *Account) error
+	Create(ctx context.Context, acc *Account) (*Account, error)
 	Update(ctx context.Context, acc *Account) (*Account, error)
 	Delete(ctx context.Context, id int64) error
 }

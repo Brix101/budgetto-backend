@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -32,8 +31,6 @@ func (a api) userListHandler(w http.ResponseWriter, r *http.Request) {
 		a.errorResponse(w, r, 500, err)
 		return
 	}
-
-	fmt.Println(user)
 
 	catsJson, err := json.Marshal(user)
 	if err != nil {
