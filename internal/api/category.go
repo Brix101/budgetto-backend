@@ -10,6 +10,7 @@ import (
 	"github.com/Brix101/budgetto-backend/internal/middlwares"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator"
+	"go.uber.org/zap"
 )
 
 func (a api) CategoryRoutes() chi.Router {
@@ -39,6 +40,7 @@ func (a api) categoryListHandler(w http.ResponseWriter, r *http.Request) {
 
 	cats, err := a.categoryRepo.GetByUserID(ctx, int64(user.Sub))
 	if err != nil {
+		a.logger.Error("failed to fetch categories from database", zap.Error(err))
 		a.errorResponse(w, r, 500, err)
 		return
 	}
@@ -58,6 +60,8 @@ func (a api) categoryGetHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
+	user := r.Context().Value("user").(*domain.UserClaims)
+
 	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
 		a.errorResponse(w, r, 500, err)
@@ -74,7 +78,12 @@ func (a api) categoryGetHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	catsJSON, err := json.Marshal(cat)
+	if cat.ID != uint(user.Sub) {
+		a.errorResponse(w, r, 403, domain.ErrForbidden)
+		return
+	}
+
+	resJSON, err := json.Marshal(cat)
 	if err != nil {
 		a.errorResponse(w, r, 500, err)
 		return
@@ -82,34 +91,36 @@ func (a api) categoryGetHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write(catsJSON)
+	w.Write(resJSON)
 }
 
 func (a api) categoryCreateHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	var newCat domain.Category
-	userID := uint(1)
-	newCat.CreatedBy = &userID
-	newCat.Note = ""
+	user := r.Context().Value("user").(*domain.UserClaims)
 
-	err := json.NewDecoder(r.Body).Decode(&newCat)
-	if err != nil {
+	userId := uint(user.Sub)
+	newCat := domain.Category{
+		CreatedBy: &userId,
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&newCat); err != nil {
+		a.logger.Error("failed to parse request json", zap.Error(err))
 		a.errorResponse(w, r, 422, err)
 		return
 	}
 
 	validate := validator.New()
-	err = validate.Struct(newCat)
-
-	if err != nil {
+	if err := validate.Struct(newCat); err != nil {
+		a.logger.Error("failed to validate create category struct", zap.Error(err))
 		a.errorResponse(w, r, 400, err)
 		return
 	}
 
 	cat, err := a.categoryRepo.Create(ctx, &newCat)
 	if err != nil {
+		a.logger.Error("failed to create category", zap.Error(err))
 		a.errorResponse(w, r, 500, err)
 		return
 	}
@@ -128,6 +139,8 @@ func (a api) categoryUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
+	user := r.Context().Value("user").(*domain.UserClaims)
+
 	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
 		a.errorResponse(w, r, 500, err)
@@ -144,8 +157,14 @@ func (a api) categoryUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if cat.ID != uint(user.Sub) {
+		a.errorResponse(w, r, 403, domain.ErrForbidden)
+		return
+	}
+
 	var upCat updateCategoryRequest
 	if err := json.NewDecoder(r.Body).Decode(&upCat); err != nil {
+		a.logger.Error("failed to parse request json", zap.Error(err))
 		a.errorResponse(w, r, 422, err)
 		return
 	}
@@ -161,6 +180,7 @@ func (a api) categoryUpdateHandler(w http.ResponseWriter, r *http.Request) {
 
 	updatedCat, err := a.categoryRepo.Update(ctx, &cat)
 	if err != nil {
+		a.logger.Error("failed to delete category", zap.Error(err))
 		a.errorResponse(w, r, 500, err)
 	}
 
@@ -179,14 +199,30 @@ func (a api) categoryDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
+	user := r.Context().Value("user").(*domain.UserClaims)
+
 	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
 		a.errorResponse(w, r, 500, err)
 		return
 	}
 
-	err = a.categoryRepo.Delete(ctx, int64(id))
+	cat, err := a.categoryRepo.GetByID(ctx, int64(id))
 	if err != nil {
+		status := 500
+		if err.Error() == domain.ErrNotFound.Error() {
+			status = 404
+		}
+		a.errorResponse(w, r, status, err)
+		return
+	}
+
+	if cat.ID != uint(user.Sub) {
+		a.errorResponse(w, r, 403, domain.ErrForbidden)
+		return
+	}
+	if err := a.categoryRepo.Delete(ctx, int64(id)); err != nil {
+		a.logger.Error("failed to delete category", zap.Error(err))
 		status := 500
 		if err.Error() == domain.ErrNotFound.Error() {
 			status = 404

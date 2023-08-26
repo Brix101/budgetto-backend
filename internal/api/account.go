@@ -10,6 +10,7 @@ import (
 	"github.com/Brix101/budgetto-backend/internal/middlwares"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator"
+	"go.uber.org/zap"
 )
 
 func (a api) AccountRoutes() chi.Router {
@@ -40,6 +41,7 @@ func (a api) accountListHandler(w http.ResponseWriter, r *http.Request) {
 
 	accs, err := a.accountRepo.GetByUserID(ctx, int64(user.Sub))
 	if err != nil {
+		a.logger.Error("failed to fetch accounts from database", zap.Error(err))
 		a.errorResponse(w, r, 500, err)
 		return
 	}
@@ -59,6 +61,8 @@ func (a api) accountGetHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
+	user := r.Context().Value("user").(*domain.UserClaims)
+
 	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
 		a.errorResponse(w, r, 500, err)
@@ -72,6 +76,11 @@ func (a api) accountGetHandler(w http.ResponseWriter, r *http.Request) {
 			status = 404
 		}
 		a.errorResponse(w, r, status, err)
+		return
+	}
+
+	if acc.CreatedBy != uint(user.Sub) {
+		a.errorResponse(w, r, 403, domain.ErrForbidden)
 		return
 	}
 
@@ -90,27 +99,27 @@ func (a api) accountCreateHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	var newAcc domain.Account
-	userID := uint(1)
-	newAcc.CreatedBy = userID
-	newAcc.Note = ""
+	user := r.Context().Value("user").(*domain.UserClaims)
 
-	err := json.NewDecoder(r.Body).Decode(&newAcc)
-	if err != nil {
+	newAcc := domain.Account{
+		CreatedBy: uint(user.Sub),
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&newAcc); err != nil {
+		a.logger.Error("failed to parse request json", zap.Error(err))
 		a.errorResponse(w, r, 422, err)
 		return
 	}
 
 	validate := validator.New()
-	err = validate.Struct(newAcc)
-
-	if err != nil {
+	if err := validate.Struct(newAcc); err != nil {
 		a.errorResponse(w, r, 400, err)
 		return
 	}
 
 	acc, err := a.accountRepo.Create(ctx, &newAcc)
 	if err != nil {
+		a.logger.Error("failed to create account", zap.Error(err))
 		a.errorResponse(w, r, 500, err)
 		return
 	}
@@ -129,6 +138,8 @@ func (a api) accountUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
+	user := r.Context().Value("user").(*domain.UserClaims)
+
 	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
 		a.errorResponse(w, r, 500, err)
@@ -145,12 +156,17 @@ func (a api) accountUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if acc.CreatedBy != uint(user.Sub) {
+		a.errorResponse(w, r, 403, domain.ErrForbidden)
+		return
+	}
+
 	var upCat updateAccountRequest
 	if err := json.NewDecoder(r.Body).Decode(&upCat); err != nil {
+		a.logger.Error("failed to parse request json", zap.Error(err))
 		a.errorResponse(w, r, 422, err)
 		return
 	}
-	defer r.Body.Close()
 
 	if upCat.Name != "" {
 		acc.Name = upCat.Name
@@ -160,16 +176,17 @@ func (a api) accountUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		acc.Note = upCat.Note
 	}
 
-	if upCat.Balance != acc.Balance {
+	if upCat.Balance > 0 && upCat.Balance != acc.Balance {
 		acc.Balance = upCat.Balance
 	}
 
 	updatedCat, err := a.accountRepo.Update(ctx, &acc)
 	if err != nil {
+		a.logger.Error("failed to update account", zap.Error(err))
 		a.errorResponse(w, r, 500, err)
 	}
 
-	catJSON, err := json.Marshal(updatedCat)
+	resJSON, err := json.Marshal(updatedCat)
 	if err != nil {
 		a.errorResponse(w, r, 500, err)
 		return
@@ -177,12 +194,14 @@ func (a api) accountUpdateHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write(catJSON)
+	w.Write(resJSON)
 }
 
 func (a api) accountDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
+
+	user := r.Context().Value("user").(*domain.UserClaims)
 
 	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
@@ -190,8 +209,23 @@ func (a api) accountDeleteHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = a.accountRepo.Delete(ctx, int64(id))
+	acc, err := a.accountRepo.GetByID(ctx, int64(id))
 	if err != nil {
+		status := 500
+		if err.Error() == domain.ErrNotFound.Error() {
+			status = 404
+		}
+		a.errorResponse(w, r, status, err)
+		return
+	}
+
+	if acc.CreatedBy != uint(user.Sub) {
+		a.errorResponse(w, r, 403, domain.ErrForbidden)
+		return
+	}
+
+	if err = a.accountRepo.Delete(ctx, int64(acc.ID)); err != nil {
+		a.logger.Error("failed to delete account", zap.Error(err))
 		status := 500
 		if err.Error() == domain.ErrNotFound.Error() {
 			status = 404

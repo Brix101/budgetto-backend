@@ -6,14 +6,12 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"strconv"
 	"syscall"
 	"time"
 
 	"github.com/Brix101/budgetto-backend/config"
 	"github.com/Brix101/budgetto-backend/internal/api"
 	"github.com/Brix101/budgetto-backend/internal/util"
-	"go.uber.org/zap"
 )
 
 func main() {
@@ -57,14 +55,13 @@ func main() {
 		}
 		cancel()
 	}()
+
+	logger.Info("🚀🚀🚀 Server at port: " + env.PORT)
 	// Run the server
 	err := server.ListenAndServe()
 	if err != nil && err != http.ErrServerClosed {
 		log.Fatal(err)
 	}
-
-	port, _ := strconv.Atoi(env.PORT)
-	logger.Info("started api", zap.Int("port", port))
 
 	// Wait for server context to be stopped
 	<-ctx.Done()

@@ -8,6 +8,7 @@ import (
 	"github.com/Brix101/budgetto-backend/internal/domain"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator"
+	"go.uber.org/zap"
 )
 
 func (a api) AuthRoutes() chi.Router {
@@ -35,37 +36,36 @@ func (a api) signInHandler(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	var reqBody signInRequest
-	err := json.NewDecoder(r.Body).Decode(&reqBody)
-	if err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 		a.errorResponse(w, r, 422, err)
 		return
 	}
 
 	validate := validator.New()
-	err = validate.Struct(reqBody)
-	if err != nil {
+	if err := validate.Struct(reqBody); err != nil {
 		a.errorResponse(w, r, 400, err)
 		return
 	}
 
 	usr, err := a.userRepo.GetByEmail(ctx, reqBody.Email)
 	if err != nil {
-		a.errorResponse(w, r, 403, domain.ErrInvalidCredentials)
+		a.errorResponse(w, r, 401, domain.ErrInvalidCredentials)
 		return
 	}
 
 	if validatePass := usr.CheckPassword(reqBody.Password); !validatePass {
-		a.errorResponse(w, r, 403, domain.ErrInvalidCredentials)
+		a.errorResponse(w, r, 401, domain.ErrInvalidCredentials)
 		return
 	}
 
 	usrToken, err := usr.GenerateClaims()
 	if err != nil {
+		a.logger.Error("failed to generate user claims", zap.Error(err))
 		a.errorResponse(w, r, 500, err)
 		return
 	}
 
-	usrJSON, err := json.Marshal(usrToken)
+	resJSON, err := json.Marshal(usrToken)
 	if err != nil {
 		a.errorResponse(w, r, 500, err)
 		return
@@ -73,7 +73,7 @@ func (a api) signInHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write(usrJSON)
+	w.Write(resJSON)
 }
 
 func (a api) signUpHandler(w http.ResponseWriter, r *http.Request) {
@@ -81,16 +81,13 @@ func (a api) signUpHandler(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	reqBody := signUpRequest{}
-	err := json.NewDecoder(r.Body).Decode(&reqBody)
-	if err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 		a.errorResponse(w, r, 422, err)
 		return
 	}
 
 	validate := validator.New()
-	err = validate.Struct(reqBody)
-
-	if err != nil {
+	if err := validate.Struct(reqBody); err != nil {
 		a.errorResponse(w, r, 400, err)
 		return
 	}
@@ -108,11 +105,12 @@ func (a api) signUpHandler(w http.ResponseWriter, r *http.Request) {
 
 	usr, err := a.userRepo.Create(ctx, &newUsr)
 	if err != nil {
+		a.logger.Error("failed to create user", zap.Error(err))
 		a.errorResponse(w, r, 500, err)
 		return
 	}
 
-	usrJSON, err := json.Marshal(usr)
+	resJSON, err := json.Marshal(usr)
 	if err != nil {
 		a.errorResponse(w, r, 500, err)
 		return
@@ -120,5 +118,5 @@ func (a api) signUpHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write(usrJSON)
+	w.Write(resJSON)
 }

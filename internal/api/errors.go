@@ -3,9 +3,7 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
-	"reflect"
 	"strings"
 
 	"github.com/Brix101/budgetto-backend/internal/domain"
@@ -17,7 +15,6 @@ func (a *api) errorResponse(w http.ResponseWriter, _ *http.Request, status int, 
 	var errorResponse domain.ErrResponse
 	statusCode := status // Default status code
 
-	log.Println(reflect.TypeOf(err), err)
 	switch typedErr := err.(type) {
 	case *pgconn.PgError:
 		constraintName := typedErr.ConstraintName
