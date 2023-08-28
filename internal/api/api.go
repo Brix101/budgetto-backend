@@ -50,7 +50,7 @@ func (a *api) Routes() *chi.Mux {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 
-	r.Route("/api/v1", func(r chi.Router) {
+	r.Route("/v1", func(r chi.Router) {
 		r.Mount("/health", a.HealthRoutes())
 		r.Mount("/categories", a.CategoryRoutes())
 		r.Mount("/accounts", a.AccountRoutes())
