@@ -2,9 +2,9 @@
 version: "3.1"
 
 services:
-  db:
+  database:
     image: postgres
-    restart: always
+    # restart: always
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -12,7 +12,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - db:/var/lib/postgresql/data
+      - database:/var/lib/postgresql/data
 
   cache:
     image: redis
@@ -29,8 +29,53 @@ services:
     ports:
       - 8080:8080
 
+  server-1:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file: .env
+    depends_on:
+      - database
+    networks:
+      - default
+    ports:
+      - "4000:4000"
+    environment:
+      - PORT=4000
+      - ENV=production
+
+  server-2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file: .env
+    depends_on:
+      - database
+    networks:
+      - default
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - ENV=production
+
+  caddy:
+    image: caddy/caddy:2.7.3-alpine
+    container_name: caddy-server
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - $PWD/Caddyfile:/etc/caddy/Caddyfile
+      - $PWD/site:/srv
+      - caddy_data:/data
+      - caddy_config:/config
+
 volumes:
-  db:
+  database:
     driver: local
   cache:
     driver: local
+  caddy_data:
+  caddy_config:
