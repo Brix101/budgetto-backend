@@ -20,6 +20,5 @@ WORKDIR /app
 COPY .env .
 COPY --from=builder /main .
 
-
 # Run
 CMD ["./main"]
