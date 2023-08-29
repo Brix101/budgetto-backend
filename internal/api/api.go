@@ -22,12 +22,14 @@ type api struct {
 	accountRepo  domain.AccountRepository
 }
 
-func NewAPI(_ context.Context, logger *zap.Logger, pool *pgxpool.Pool) *api {
+func NewAPI(ctx context.Context, logger *zap.Logger, pool *pgxpool.Pool) *api {
 	categoryRepo := repository.NewPostgresCategory(pool)
 	userRepo := repository.NewPostgresUser(pool)
 	accountRepo := repository.NewPostgresAccount(pool)
 
 	client := &http.Client{}
+
+	categoryRepo.Seed(ctx)
 
 	return &api{
 		logger:     logger,
