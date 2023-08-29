@@ -2,7 +2,7 @@
     debug
 }
 
-http://127.0.0.1 {
+http://192.168.254.180 {
     reverse_proxy server-1:4000 server-2:5000 {
         header_down Strict-Transport-Security max-age=31536000
     }
