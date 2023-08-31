@@ -2,29 +2,7 @@ package domain
 
 import (
 	"context"
-	"database/sql/driver"
 )
-
-type Operation string
-
-const (
-	Expense  Operation = "Expense"
-	Income   Operation = "Income"
-	Transfer Operation = "Transfer"
-	Refund   Operation = "Refund"
-)
-
-func (st *Operation) Scan(value interface{}) error {
-	b, ok := value.([]byte)
-	if !ok {
-		*st = Operation(b)
-	}
-	return nil
-}
-
-func (st Operation) Value() (driver.Value, error) {
-	return string(st), nil
-}
 
 type Transaction struct {
 	Base
