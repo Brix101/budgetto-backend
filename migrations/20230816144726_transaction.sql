@@ -5,7 +5,7 @@ CREATE TYPE transaction_type AS ENUM ('Expense', 'Income', 'Transfer', 'Refund')
 CREATE TABLE transactions (
     id SERIAL PRIMARY KEY,
     amount DOUBLE PRECISION DEFAULT 0,
-    note TEXT,
+    note TEXT DEFAULT '',
     transaction_type transaction_type NOT NULL DEFAULT 'Expense',
     account_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
     category_id INTEGER NOT NULL REFERENCES categories(id) ON DELETE CASCADE,

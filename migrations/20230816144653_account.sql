@@ -4,7 +4,7 @@ CREATE TABLE accounts (
   id SERIAL PRIMARY KEY,
   name VARCHAR NOT NULL,
   balance DOUBLE PRECISION DEFAULT 0,
-  note TEXT,
+  note TEXT DEFAULT '',
   created_by INTEGER REFERENCES users (id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),

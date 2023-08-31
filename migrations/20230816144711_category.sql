@@ -3,7 +3,7 @@
 CREATE TABLE categories (
     id SERIAL PRIMARY KEY,
     name VARCHAR NOT NULL,
-    note TEXT,
+    note TEXT DEFAULT '',
     created_by INTEGER REFERENCES users (id) ON DELETE CASCADE DEFAULT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),

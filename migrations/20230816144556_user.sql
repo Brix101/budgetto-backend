@@ -5,7 +5,7 @@ CREATE TABLE users (
     name VARCHAR NOT NULL,
     email VARCHAR NOT NULL UNIQUE,
     password VARCHAR NOT NULL,
-    bio TEXT,
+    bio TEXT DEFAULT '',
     image VARCHAR DEFAULT '',
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
