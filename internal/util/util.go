@@ -42,7 +42,7 @@ func NewDatabasePool(ctx context.Context, database_url string, maxConns int) *pg
 }
 
 func NewLogger(service string) *zap.Logger {
-	env := os.Getenv("ENV")
+	env := os.Getenv("GO_ENV")
 	logger, _ := zap.NewProduction(zap.Fields(
 		zap.String("env", env),
 		zap.String("service", service),

@@ -16,6 +16,9 @@ FROM alpine:3.14.2
 # Set the working directory
 WORKDIR /app
 
+# Set the environment variable
+ENV GO_ENV=prod
+
 # Copy the binary built in the previous stage
 # COPY .env .
 COPY --from=builder /main .
