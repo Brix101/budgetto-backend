@@ -9,6 +9,7 @@ import (
 	"github.com/Brix101/budgetto-backend/internal/domain"
 	"github.com/Brix101/budgetto-backend/internal/middlwares"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-playground/validator"
 	"go.uber.org/zap"
 )
 
@@ -18,12 +19,20 @@ func (a api) TransactionRoutes() chi.Router {
 	r.Use(middlwares.JWTMiddleware)
 
 	r.Get("/", a.transactionListHandler)
-	r.Post("/", a.budgetCreateHandler)
+	r.Post("/", a.transactionCreateHandler)
 	r.Get("/{id}", a.transactionGetHandler)
 	r.Put("/{id}", a.budgetUpdateHandler)
 	r.Delete("/{id}", a.transactionDeleteHandler)
 
 	return r
+}
+
+type createTransactionRequest struct {
+	Amount     float64 `json:"amount" validate:"gte=0"`
+	Note       string  `json:"note"`
+	Operation  string  `json:"operation" validate:"oneof=Expense Income Transfer Refund"`
+	AccountID  uint    `json:"account_id" validate:"required"`
+	CategoryID uint    `json:"category_id" validate:"required"`
 }
 
 func (a api) transactionListHandler(w http.ResponseWriter, r *http.Request) {
@@ -86,6 +95,58 @@ func (a api) transactionGetHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(resJSON)
+}
+
+func (a api) transactionCreateHandler(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithCancel(r.Context())
+	defer cancel()
+
+	user := r.Context().Value("user").(*domain.UserClaims)
+
+	userId := uint(user.Sub)
+	reqBody := createTransactionRequest{}
+
+	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
+		a.logger.Error("failed to parse request json", zap.Error(err))
+		a.errorResponse(w, r, 422, err)
+		return
+	}
+
+	validate := validator.New()
+	if err := validate.Struct(reqBody); err != nil {
+		a.logger.Error("failed to validate create budget struct", zap.Error(err))
+		a.errorResponse(w, r, 400, err)
+		return
+	}
+
+	trnReq := domain.Transaction{
+		Amount:     reqBody.Amount,
+		CategoryID: reqBody.CategoryID,
+		AccountID:  reqBody.AccountID,
+		CreatedBy:  userId,
+	}
+
+	newTrn, err := a.transactionRepo.Create(ctx, &trnReq)
+	if err != nil {
+		a.logger.Error("failed to create transaction", zap.Error(err))
+		a.errorResponse(w, r, 500, err)
+		return
+	}
+
+	trn, err := a.transactionRepo.GetByID(ctx, int64(newTrn.ID))
+	if err != nil {
+		a.errorResponse(w, r, 500, err)
+		return
+	}
+
+	resJSON, err := json.Marshal(trn)
+	if err != nil {
+		a.errorResponse(w, r, 500, err)
+		return
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(resJSON)

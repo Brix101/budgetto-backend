@@ -124,39 +124,33 @@ func (a api) budgetCreateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	newBud := domain.Budget{
+	budReq := domain.Budget{
 		Amount:     reqBody.Amount,
 		CategoryID: reqBody.CategoryID,
 		CreatedBy:  userId,
 	}
 
-	bud, err := a.budgetRepo.Create(ctx, &newBud)
+	newBud, err := a.budgetRepo.Create(ctx, &budReq)
 	if err != nil {
 		a.logger.Error("failed to create budget", zap.Error(err))
 		a.errorResponse(w, r, 500, err)
 		return
 	}
 
-	cat, err := a.categoryRepo.GetByID(ctx, int64(bud.CategoryID))
+	bud, err := a.budgetRepo.GetByID(ctx, int64(newBud.ID))
 	if err != nil {
-		status := 500
-		if err.Error() == domain.ErrNotFound.Error() {
-			status = 404
-		}
-		a.errorResponse(w, r, status, err)
+		a.errorResponse(w, r, 500, err)
 		return
 	}
 
-	bud.Category = cat
-
-	catJSON, err := json.Marshal(bud)
+	resJSON, err := json.Marshal(bud)
 	if err != nil {
 		a.errorResponse(w, r, 500, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write(catJSON)
+	w.Write(resJSON)
 }
 
 func (a api) budgetUpdateHandler(w http.ResponseWriter, r *http.Request) {

@@ -113,8 +113,11 @@ func GetValidationErrorMessage(err validator.FieldError) string {
 		return "Enter a valid email address."
 	case "gte":
 		return fmt.Sprintf("%s should be greater than %s.", fieldName, err.Param())
-	// Add more cases for other validation tags as needed.
+	case "oneof":
+		return fmt.Sprintf("%s should be one of the allowed values: %s.", fieldName, err.Param())
+		// Add more cases for other validation tags as needed.
+
 	default:
-		return "Invalid input."
+		return fmt.Sprintf("Invalid input: %s.", err.Param())
 	}
 }
