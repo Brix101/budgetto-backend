@@ -1,6 +1,10 @@
 package domain
 
-import "context"
+import (
+	"context"
+
+	"go.uber.org/zap"
+)
 
 type Category struct {
 	Base
@@ -21,5 +25,5 @@ type CategoryRepository interface {
 	Update(ctx context.Context, cat *Category) (*Category, error)
 	Create(ctx context.Context, cat *Category) (*Category, error)
 	Delete(ctx context.Context, id int64) error
-	Seed(ctx context.Context) error
+	Seed(ctx context.Context, logger *zap.Logger) error
 }

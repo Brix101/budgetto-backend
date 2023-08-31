@@ -34,7 +34,7 @@ func NewAPI(ctx context.Context, logger *zap.Logger, pool *pgxpool.Pool) *api {
 
 	client := &http.Client{}
 
-	categoryRepo.Seed(ctx)
+	categoryRepo.Seed(ctx, logger)
 
 	return &api{
 		logger:     logger,

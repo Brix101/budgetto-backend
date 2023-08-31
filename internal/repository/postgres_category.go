@@ -8,6 +8,7 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
+	"go.uber.org/zap"
 )
 
 type postgresCategoryRepository struct {
@@ -220,7 +221,7 @@ func (p *postgresCategoryRepository) Delete(ctx context.Context, id int64) error
 	return nil
 }
 
-func (p *postgresCategoryRepository) Seed(ctx context.Context) error {
+func (p *postgresCategoryRepository) Seed(ctx context.Context, logger *zap.Logger) error {
 	t_query := `
 		SELECT COUNT(*) FROM categories`
 
@@ -252,17 +253,17 @@ func (p *postgresCategoryRepository) Seed(ctx context.Context) error {
 		if err != nil {
 			span.SetStatus(codes.Error, "failed to seed category")
 			span.RecordError(err)
-			log.Println("❌❌❌ Failed to seed category:", err.Error())
+			logger.Error("❌❌❌ Failed to seed category:", zap.Error(err))
 			return err
 		}
 
 		rowsAffected := result.RowsAffected()
 		if rowsAffected >= 1 {
-			log.Println("✅✅✅ Category seeder executed successfully.")
+			logger.Info("✅✅✅ Category seeder executed successfully.")
 		}
 		return nil
 	}
 
-	log.Println("👍👍👍 Category records already exist. Skipping the seeder.")
+	logger.Info("👍👍👍 Category records already exist. Skipping the seeder.")
 	return nil
 }
