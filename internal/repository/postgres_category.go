@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"log"
 
 	"github.com/Brix101/budgetto-backend/internal/domain"
 	"go.opentelemetry.io/otel"
