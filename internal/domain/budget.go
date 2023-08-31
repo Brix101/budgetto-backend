@@ -9,6 +9,8 @@ type Budget struct {
 	Amount     float64 `json:"amount"`
 	CategoryID uint    `json:"-"`
 	CreatedBy  uint    `json:"-"`
+
+	Category Category `json:"category,omitempty"`
 }
 
 // BudgetRepository represents the budget's repository contract

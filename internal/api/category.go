@@ -157,7 +157,7 @@ func (a api) categoryUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if cat.ID != uint(user.Sub) {
+	if *cat.CreatedBy != uint(user.Sub) {
 		a.errorResponse(w, r, 403, domain.ErrForbidden)
 		return
 	}
@@ -182,6 +182,7 @@ func (a api) categoryUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		a.logger.Error("failed to delete category", zap.Error(err))
 		a.errorResponse(w, r, 500, err)
+		return
 	}
 
 	catJSON, err := json.Marshal(updatedCat)
@@ -217,7 +218,7 @@ func (a api) categoryDeleteHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if cat.ID != uint(user.Sub) {
+	if *cat.CreatedBy != uint(user.Sub) {
 		a.errorResponse(w, r, 403, domain.ErrForbidden)
 		return
 	}
