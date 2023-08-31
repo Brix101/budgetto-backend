@@ -25,7 +25,7 @@ func GetConfig() *EnvVars {
 func init() {
 	env := os.Getenv("GO_ENV")
 
-	if env == "prod" {
+	if env != "prod" {
 		err := godotenv.Load()
 		if err != nil {
 			log.Fatal("Error loading .env file")
