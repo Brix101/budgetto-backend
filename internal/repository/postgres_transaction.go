@@ -34,19 +34,35 @@ func (p *postgresTransactionRepository) fetch(ctx context.Context, query string,
 	trns := []domain.Transaction{}
 	for rows.Next() {
 		var trn domain.Transaction
+		var acc domain.Account
+		var cat domain.Category
 		if err := rows.Scan(
 			&trn.ID,
 			&trn.Amount,
 			&trn.Note,
-			&trn.TransactionType,
+			&trn.Operation,
 			&trn.AccountID,
 			&trn.CategoryID,
 			&trn.CreatedBy,
 			&trn.CreatedAt,
 			&trn.UpdatedAt,
+			&acc.ID,
+			&acc.Name,
+			&acc.Balance,
+			&acc.Note,
+			&acc.CreatedAt,
+			&acc.UpdatedAt,
+			&cat.ID,
+			&cat.Name,
+			&cat.Note,
+			&cat.CreatedAt,
+			&cat.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
+
+		trn.Account = acc
+		trn.Category = cat
 		trns = append(trns, trn)
 	}
 	return trns, nil
@@ -54,21 +70,34 @@ func (p *postgresTransactionRepository) fetch(ctx context.Context, query string,
 
 func (p *postgresTransactionRepository) GetByID(ctx context.Context, id int64) (domain.Transaction, error) {
 	query := `
-		SELECT
-			id,
-            amount,
-            note,
-            transaction_type,
-            account_id,
-			category_id,
-			created_by,
-			created_at,
-			updated_at
-		FROM 
-            transactions
-		WHERE 
-            id = $1 AND 
-            is_deleted = FALSE`
+		SELECT 
+			T.ID,
+			T.amount,
+			T.note,
+			T.operation,
+			T.account_id,
+			T.category_id,
+			T.created_by,
+			T.created_at,
+			T.updated_at,
+			A.ID AS acc_id,
+			A.NAME AS acc_name,
+			A.balance AS acc_balance,
+			A.note AS acc_note,
+			A.created_at AS acc_created_at,
+			A.updated_at AS acc_updated_at,
+			C.ID AS cat_id,
+			C.NAME AS cat_name,
+			C.note AS cat_note,
+			C.created_at AS cat_created_at,
+			C.updated_at AS cat_updated_at 
+		FROM
+			transactions T 
+			JOIN accounts A ON T.account_id = A.ID 
+			JOIN categories C ON T.category_id = C.ID 
+		WHERE
+			T.ID = $1 
+			AND T.is_deleted = FALSE;`
 
 	trns, err := p.fetch(ctx, query, id)
 	if err != nil {
@@ -81,27 +110,38 @@ func (p *postgresTransactionRepository) GetByID(ctx context.Context, id int64) (
 	return trns[0], nil
 }
 
-func (p *postgresTransactionRepository) GetByUserID(ctx context.Context, created_by int64) ([]domain.Transaction, error) {
+func (p *postgresTransactionRepository) GetByUserID(ctx context.Context, user_id int64) ([]domain.Transaction, error) {
 	query := `
-		SELECT
-			id,
-            amount,
-            note,
-            transaction_type,
-            account_id,
-			category_id,
-			created_by,
-			created_at,
-			updated_at
+		SELECT 
+			T.ID,
+			T.amount,
+			T.note,
+			T.operation,
+			T.account_id,
+			T.category_id,
+			T.created_by,
+			T.created_at,
+			T.updated_at,
+			A.ID AS acc_id,
+			A.NAME AS acc_name,
+			A.balance AS acc_balance,
+			A.note AS acc_note,
+			A.created_at AS acc_created_at,
+			A.updated_at AS acc_updated_at,
+			C.ID AS cat_id,
+			C.NAME AS cat_name,
+			C.note AS cat_note,
+			C.created_at AS cat_created_at,
+			C.updated_at AS cat_updated_at 
 		FROM
-			transactions
+			transactions T 
+			JOIN accounts A ON T.account_id = A.ID 
+			JOIN categories C ON T.category_id = C.ID 
 		WHERE
-			created_by = $1 AND
-			is_deleted = FALSE
-		ORDER BY
-			name ASC`
+			T.created_by = $1 
+			AND T.is_deleted = FALSE;`
 
-	trns, err := p.fetch(ctx, query, created_by)
+	trns, err := p.fetch(ctx, query, user_id)
 	if err != nil {
 		return []domain.Transaction{}, err
 	}

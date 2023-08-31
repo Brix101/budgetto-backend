@@ -78,7 +78,7 @@ func (p *postgresAccountRepository) GetByID(ctx context.Context, id int64) (doma
 	return accs[0], nil
 }
 
-func (p *postgresAccountRepository) GetByUserID(ctx context.Context, created_by int64) ([]domain.Account, error) {
+func (p *postgresAccountRepository) GetByUserID(ctx context.Context, user_id int64) ([]domain.Account, error) {
 	query := `
 		SELECT
 			id,
@@ -96,7 +96,7 @@ func (p *postgresAccountRepository) GetByUserID(ctx context.Context, created_by 
 		ORDER BY
 			name ASC`
 
-	accs, err := p.fetch(ctx, query, created_by)
+	accs, err := p.fetch(ctx, query, user_id)
 	if err != nil {
 		return []domain.Account{}, err
 	}

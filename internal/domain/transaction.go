@@ -5,24 +5,24 @@ import (
 	"database/sql/driver"
 )
 
-type TransactionType string
+type Operation string
 
 const (
-	Expense  TransactionType = "Expense"
-	Income   TransactionType = "Income"
-	Transfer TransactionType = "Transfer"
-	Refund   TransactionType = "Refund"
+	Expense  Operation = "Expense"
+	Income   Operation = "Income"
+	Transfer Operation = "Transfer"
+	Refund   Operation = "Refund"
 )
 
-func (st *TransactionType) Scan(value interface{}) error {
+func (st *Operation) Scan(value interface{}) error {
 	b, ok := value.([]byte)
 	if !ok {
-		*st = TransactionType(b)
+		*st = Operation(b)
 	}
 	return nil
 }
 
-func (st TransactionType) Value() (driver.Value, error) {
+func (st Operation) Value() (driver.Value, error) {
 	return string(st), nil
 }
 
@@ -30,12 +30,15 @@ type Transaction struct {
 	Base
 
 	// transaction fields
-	Amount          float64         `json:"amount"`
-	Note            string          `json:"note,omitempty"`
-	TransactionType TransactionType `json:"transaction_type"`
-	AccountID       uint            `json:"-"`
-	CategoryID      uint            `json:"-"`
-	CreatedBy       uint            `json:"-"`
+	Amount     float64 `json:"amount"`
+	Note       string  `json:"note,omitempty"`
+	Operation  string  `json:"operation"`
+	AccountID  uint    `json:"-"`
+	CategoryID uint    `json:"-"`
+	CreatedBy  uint    `json:"-"`
+
+	Account  Account  `json:"account,omitempty"`
+	Category Category `json:"category,omitempty"`
 }
 
 // TransactionRepository represents the transactions repository contract

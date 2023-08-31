@@ -18,10 +18,11 @@ type api struct {
 	logger     *zap.Logger
 	httpClient *http.Client
 
-	categoryRepo domain.CategoryRepository
-	userRepo     domain.UserRepository
-	accountRepo  domain.AccountRepository
-	budgetRepo   domain.BudgetRepository
+	categoryRepo    domain.CategoryRepository
+	userRepo        domain.UserRepository
+	accountRepo     domain.AccountRepository
+	budgetRepo      domain.BudgetRepository
+	transactionRepo domain.TransactionRepository
 }
 
 func NewAPI(ctx context.Context, logger *zap.Logger, pool *pgxpool.Pool) *api {
@@ -29,6 +30,7 @@ func NewAPI(ctx context.Context, logger *zap.Logger, pool *pgxpool.Pool) *api {
 	userRepo := repository.NewPostgresUser(pool)
 	accountRepo := repository.NewPostgresAccount(pool)
 	budgetRepo := repository.NewPostgresBudget(pool)
+	transctionRepo := repository.NewPostgresTransaction(pool)
 
 	client := &http.Client{}
 
@@ -38,10 +40,11 @@ func NewAPI(ctx context.Context, logger *zap.Logger, pool *pgxpool.Pool) *api {
 		logger:     logger,
 		httpClient: client,
 
-		categoryRepo: categoryRepo,
-		userRepo:     userRepo,
-		accountRepo:  accountRepo,
-		budgetRepo:   budgetRepo,
+		categoryRepo:    categoryRepo,
+		userRepo:        userRepo,
+		accountRepo:     accountRepo,
+		budgetRepo:      budgetRepo,
+		transactionRepo: transctionRepo,
 	}
 }
 
@@ -70,6 +73,7 @@ func (a *api) Routes() *chi.Mux {
 		r.Mount("/auth", a.AuthRoutes())
 		r.Mount("/users", a.UserRoutes())
 		r.Mount("/budgets", a.BudgetRoutes())
+		r.Mount("/transactions", a.TransactionRoutes())
 	})
 
 	return r

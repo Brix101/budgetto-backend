@@ -59,23 +59,23 @@ func (p *postgresBudgetRepository) fetch(ctx context.Context, query string, args
 func (p *postgresBudgetRepository) GetByID(ctx context.Context, id int64) (domain.Budget, error) {
 	query := `
 		SELECT
-	        b.id,
-	        b.amount,
-	        b.category_id,
-	        b.created_by,
-	        b.created_at,
-	        b.updated_at,
-	        c.id AS category_id,
-	        c.name AS category_name,
-	        c.note AS category_note,    
-	        c.created_at AS cat_created_at, 
-	        c.updated_at AS cat_updated_at
-        FROM
-	        budgets b
-	    JOIN categories c ON b.category_id = c.ID 
-        WHERE
-	        b.id = $1 
-	        AND b.is_deleted = FALSE;`
+			b.ID,
+			b.amount,
+			b.category_id,
+			b.created_by,
+			b.created_at,
+			b.updated_at,
+			C.ID AS category_id,
+			C.NAME AS category_name,
+			C.note AS category_note,
+			C.created_at AS cat_created_at,
+			C.updated_at AS cat_updated_at 
+		FROM
+			budgets b
+			JOIN categories C ON b.category_id = C.ID 
+		WHERE
+			b.ID = $1 
+			AND b.is_deleted = FALSE;`
 
 	buds, err := p.fetch(ctx, query, id)
 	if err != nil {
@@ -88,30 +88,30 @@ func (p *postgresBudgetRepository) GetByID(ctx context.Context, id int64) (domai
 	return buds[0], nil
 }
 
-func (p *postgresBudgetRepository) GetByUserID(ctx context.Context, created_by int64) ([]domain.Budget, error) {
+func (p *postgresBudgetRepository) GetByUserID(ctx context.Context, user_id int64) ([]domain.Budget, error) {
 	query := `
-        SELECT
-	        b.id,
-	        b.amount,
-	        b.category_id,
-	        b.created_by,
-	        b.created_at,
-	        b.updated_at,
-	        c.id AS category_id,
-	        c.name AS category_name,
-	        c.note AS category_note,    
-	        c.created_at AS cat_created_at, 
-	        c.updated_at AS cat_updated_at
-        FROM
-	        budgets b
-	    JOIN categories c ON b.category_id = c.ID 
-        WHERE
-	        b.created_by = $1 
-	        AND b.is_deleted = FALSE;
-	    ORDER BY
-		    c.name ASC`
+		SELECT
+			b.ID,
+			b.amount,
+			b.category_id,
+			b.created_by,
+			b.created_at,
+			b.updated_at,
+			C.ID AS category_id,
+			C.NAME AS category_name,
+			C.note AS category_note,
+			C.created_at AS cat_created_at,
+			C.updated_at AS cat_updated_at 
+		FROM
+			budgets b
+			JOIN categories C ON b.category_id = C.ID 
+		WHERE
+			b.created_by = $1 
+			AND b.is_deleted = FALSE 
+		ORDER BY
+			C.NAME ASC;`
 
-	buds, err := p.fetch(ctx, query, created_by)
+	buds, err := p.fetch(ctx, query, user_id)
 	if err != nil {
 		return []domain.Budget{}, err
 	}

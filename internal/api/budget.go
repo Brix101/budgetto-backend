@@ -244,7 +244,7 @@ func (a api) budgetDeleteHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cat, err := a.budgetRepo.GetByID(ctx, int64(id))
+	bud, err := a.budgetRepo.GetByID(ctx, int64(id))
 	if err != nil {
 		status := 500
 		if err.Error() == domain.ErrNotFound.Error() {
@@ -254,10 +254,11 @@ func (a api) budgetDeleteHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if cat.ID != uint(user.Sub) {
+	if bud.CreatedBy != uint(user.Sub) {
 		a.errorResponse(w, r, 403, domain.ErrForbidden)
 		return
 	}
+
 	if err := a.budgetRepo.Delete(ctx, int64(id)); err != nil {
 		a.logger.Error("failed to delete budget", zap.Error(err))
 		status := 500
