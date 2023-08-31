@@ -32,11 +32,6 @@ type createBudgetRequest struct {
 	CategoryID uint    `json:"category_id" validate:"required"`
 }
 
-type updateBudgetRequest struct {
-	Amount     float64 `json:"amount" validate:"gte=0"`
-	CategoryID uint    `json:"category_id"`
-}
-
 func (a api) budgetListHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
@@ -180,21 +175,12 @@ func (a api) budgetUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var reqBody updateBudgetRequest
-	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&bud); err != nil {
 		a.logger.Error("failed to parse request json", zap.Error(err))
 		a.errorResponse(w, r, 422, err)
 		return
 	}
 	defer r.Body.Close()
-
-	if bud.Amount != reqBody.Amount {
-		bud.Amount = reqBody.Amount
-	}
-
-	if bud.CategoryID != reqBody.CategoryID {
-		bud.CategoryID = reqBody.CategoryID
-	}
 
 	updatedBud, err := a.budgetRepo.Update(ctx, &bud)
 	if err != nil {

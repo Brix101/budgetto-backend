@@ -149,6 +149,37 @@ func (p *postgresTransactionRepository) GetByUserID(ctx context.Context, user_id
 	return trns, nil
 }
 
+func (p *postgresTransactionRepository) GetOperationType(ctx context.Context) ([]string, error) {
+	query := `
+        SELECT enumlabel
+        FROM pg_enum
+        WHERE enumtypid = 'operation'::regtype;`
+
+	ctx, span := spanWithQuery(ctx, p.tracer, query)
+	defer span.End()
+
+	rows, err := p.conn.Query(ctx, query)
+	if err != nil {
+		span.SetStatus(codes.Error, "failed querying operations")
+		span.RecordError(err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	enumLabels := []string{}
+	for rows.Next() {
+		var enumLabel string
+		if err := rows.Scan(
+			&enumLabel,
+		); err != nil {
+			return nil, err
+		}
+		enumLabels = append(enumLabels, enumLabel)
+	}
+
+	return enumLabels, nil
+}
+
 func (p *postgresTransactionRepository) Create(ctx context.Context, trn *domain.Transaction) (*domain.Transaction, error) {
 	query := `
 		INSERT INTO transactions

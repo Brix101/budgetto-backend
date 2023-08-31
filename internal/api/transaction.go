@@ -21,8 +21,9 @@ func (a api) TransactionRoutes() chi.Router {
 	r.Get("/", a.transactionListHandler)
 	r.Post("/", a.transactionCreateHandler)
 	r.Get("/{id}", a.transactionGetHandler)
-	r.Put("/{id}", a.budgetUpdateHandler)
+	r.Put("/{id}", a.transactionUpdateHandler)
 	r.Delete("/{id}", a.transactionDeleteHandler)
+	r.Get("/operations", a.transactionOpListHandler)
 
 	return r
 }
@@ -33,6 +34,28 @@ type createTransactionRequest struct {
 	Operation  string  `json:"operation" validate:"oneof=Expense Income Transfer Refund"`
 	AccountID  uint    `json:"account_id" validate:"required"`
 	CategoryID uint    `json:"category_id" validate:"required"`
+}
+
+func (a api) transactionOpListHandler(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithCancel(r.Context())
+	defer cancel()
+
+	ops, err := a.transactionRepo.GetOperationType(ctx)
+	if err != nil {
+		a.logger.Error("failed to fetch operations from database", zap.Error(err))
+		a.errorResponse(w, r, 500, err)
+		return
+	}
+
+	resJSON, err := json.Marshal(ops)
+	if err != nil {
+		a.errorResponse(w, r, 500, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(resJSON)
 }
 
 func (a api) transactionListHandler(w http.ResponseWriter, r *http.Request) {
@@ -147,6 +170,64 @@ func (a api) transactionCreateHandler(w http.ResponseWriter, r *http.Request) {
 		a.errorResponse(w, r, 500, err)
 		return
 	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(resJSON)
+}
+
+func (a api) transactionUpdateHandler(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithCancel(r.Context())
+	defer cancel()
+
+	user := r.Context().Value("user").(*domain.UserClaims)
+
+	id, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil {
+		a.errorResponse(w, r, 500, err)
+		return
+	}
+
+	reqTrn, err := a.transactionRepo.GetByID(ctx, int64(id))
+	if err != nil {
+		status := 500
+		if err.Error() == domain.ErrNotFound.Error() {
+			status = 404
+		}
+		a.errorResponse(w, r, status, err)
+		return
+	}
+
+	if reqTrn.CreatedBy != uint(user.Sub) {
+		a.errorResponse(w, r, 403, domain.ErrForbidden)
+		return
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&reqTrn); err != nil {
+		a.logger.Error("failed to parse request json", zap.Error(err))
+		a.errorResponse(w, r, 422, err)
+		return
+	}
+	defer r.Body.Close()
+
+	upTrn, err := a.transactionRepo.Update(ctx, &reqTrn)
+	if err != nil {
+		a.logger.Error("failed to update transaction", zap.Error(err))
+		a.errorResponse(w, r, 500, err)
+		return
+	}
+
+	trn, err := a.transactionRepo.GetByID(ctx, int64(upTrn.ID))
+	if err != nil {
+		a.errorResponse(w, r, 500, err)
+		return
+	}
+
+	resJSON, err := json.Marshal(trn)
+	if err != nil {
+		a.errorResponse(w, r, 500, err)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(resJSON)

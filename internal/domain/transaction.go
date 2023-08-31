@@ -23,6 +23,7 @@ type Transaction struct {
 type TransactionRepository interface {
 	GetByID(ctx context.Context, id int64) (Transaction, error)
 	GetByUserID(ctx context.Context, user_id int64) ([]Transaction, error)
+	GetOperationType(ctx context.Context) ([]string, error)
 	// GetAll(ctx context.Context) ([]Transaction, error)
 
 	// CreateOrUpdate(ctx context.Context, tra *Transaction) error
