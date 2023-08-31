@@ -27,9 +27,9 @@ func (a api) CategoryRoutes() chi.Router {
 	return r
 }
 
-type updateCategoryRequest struct {
-	Name string `json:"name"`
-	Note string `json:"note"`
+type createCategoryRequest struct {
+	Name string `json:"name" validate:"required"`
+	Note string `json:"note,omitempty"`
 }
 
 func (a api) categoryListHandler(w http.ResponseWriter, r *http.Request) {
@@ -99,23 +99,26 @@ func (a api) categoryCreateHandler(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	user := r.Context().Value("user").(*domain.UserClaims)
-
 	userId := uint(user.Sub)
-	newCat := domain.Category{
-		CreatedBy: &userId,
-	}
 
-	if err := json.NewDecoder(r.Body).Decode(&newCat); err != nil {
+	reqBody := createCategoryRequest{}
+	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 		a.logger.Error("failed to parse request json", zap.Error(err))
 		a.errorResponse(w, r, 422, err)
 		return
 	}
 
 	validate := validator.New()
-	if err := validate.Struct(newCat); err != nil {
+	if err := validate.Struct(reqBody); err != nil {
 		a.logger.Error("failed to validate create category struct", zap.Error(err))
 		a.errorResponse(w, r, 400, err)
 		return
+	}
+
+	newCat := domain.Category{
+		Name:      reqBody.Name,
+		Note:      reqBody.Note,
+		CreatedBy: &userId,
 	}
 
 	cat, err := a.categoryRepo.Create(ctx, &newCat)
@@ -125,14 +128,14 @@ func (a api) categoryCreateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	catJSON, err := json.Marshal(cat)
+	resJSON, err := json.Marshal(cat)
 	if err != nil {
 		a.errorResponse(w, r, 500, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write(catJSON)
+	w.Write(resJSON)
 }
 
 func (a api) categoryUpdateHandler(w http.ResponseWriter, r *http.Request) {
@@ -162,21 +165,12 @@ func (a api) categoryUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var upCat updateCategoryRequest
-	if err := json.NewDecoder(r.Body).Decode(&upCat); err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&cat); err != nil {
 		a.logger.Error("failed to parse request json", zap.Error(err))
 		a.errorResponse(w, r, 422, err)
 		return
 	}
 	defer r.Body.Close()
-
-	if upCat.Name != "" {
-		cat.Name = upCat.Name
-	}
-
-	if upCat.Note != "" {
-		cat.Note = upCat.Note
-	}
 
 	updatedCat, err := a.categoryRepo.Update(ctx, &cat)
 	if err != nil {
@@ -185,7 +179,7 @@ func (a api) categoryUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	catJSON, err := json.Marshal(updatedCat)
+	resJSON, err := json.Marshal(updatedCat)
 	if err != nil {
 		a.errorResponse(w, r, 500, err)
 		return
@@ -193,7 +187,7 @@ func (a api) categoryUpdateHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write(catJSON)
+	w.Write(resJSON)
 }
 
 func (a api) categoryDeleteHandler(w http.ResponseWriter, r *http.Request) {

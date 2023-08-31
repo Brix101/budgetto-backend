@@ -201,7 +201,7 @@ func (a api) budgetUpdateHandler(w http.ResponseWriter, r *http.Request) {
 
 	updatedBud.Category = cat
 
-	catJSON, err := json.Marshal(updatedBud)
+	resJSON, err := json.Marshal(updatedBud)
 	if err != nil {
 		a.errorResponse(w, r, 500, err)
 		return
@@ -209,7 +209,7 @@ func (a api) budgetUpdateHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write(catJSON)
+	w.Write(resJSON)
 }
 
 func (a api) budgetDeleteHandler(w http.ResponseWriter, r *http.Request) {

@@ -12,7 +12,7 @@ import (
 type EnvVars struct {
 	DATABASE_URL string `validate:"required" mapstructure:"DATABASE_URL"`
 	TOKEN_SECRET string `validate:"required" mapstructure:"TOKEN_SECRET"`
-	SALT string `validate:"required" mapstructure:"SALT"`
+	SALT         string `validate:"required" mapstructure:"SALT"`
 	PORT         string `mapstructure:"PORT"`
 }
 

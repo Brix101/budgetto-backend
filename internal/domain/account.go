@@ -6,8 +6,8 @@ type Account struct {
 	Base
 
 	// account fields
-	Name      string  `json:"name" validate:"required"`
-	Balance   float64 `json:"balance" validate:"gte=0"`
+	Name      string  `json:"name"`
+	Balance   float64 `json:"balance"`
 	Note      string  `json:"note,omitempty"`
 	CreatedBy uint    `json:"-"`
 }

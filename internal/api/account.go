@@ -27,10 +27,10 @@ func (a api) AccountRoutes() chi.Router {
 	return r
 }
 
-type updateAccountRequest struct {
-	Name    string  `json:"name"`
-	Balance float64 `json:"balance"`
-	Note    string  `json:"note"`
+type createAccountRequest struct {
+	Name    string  `json:"name" validate:"required"`
+	Balance float64 `json:"balance" validate:"gte=0"`
+	Note    string  `json:"note,omitempty"`
 }
 
 func (a api) accountListHandler(w http.ResponseWriter, r *http.Request) {
@@ -101,20 +101,25 @@ func (a api) accountCreateHandler(w http.ResponseWriter, r *http.Request) {
 
 	user := r.Context().Value("user").(*domain.UserClaims)
 
-	newAcc := domain.Account{
-		CreatedBy: uint(user.Sub),
-	}
+	reqBody := createAccountRequest{}
 
-	if err := json.NewDecoder(r.Body).Decode(&newAcc); err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 		a.logger.Error("failed to parse request json", zap.Error(err))
 		a.errorResponse(w, r, 422, err)
 		return
 	}
 
 	validate := validator.New()
-	if err := validate.Struct(newAcc); err != nil {
+	if err := validate.Struct(reqBody); err != nil {
 		a.errorResponse(w, r, 400, err)
 		return
+	}
+
+	newAcc := domain.Account{
+		Name:      reqBody.Name,
+		Balance:   reqBody.Balance,
+		Note:      reqBody.Note,
+		CreatedBy: uint(user.Sub),
 	}
 
 	acc, err := a.accountRepo.Create(ctx, &newAcc)
@@ -124,14 +129,14 @@ func (a api) accountCreateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	accJSON, err := json.Marshal(acc)
+	resJSON, err := json.Marshal(acc)
 	if err != nil {
 		a.errorResponse(w, r, 500, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write(accJSON)
+	w.Write(resJSON)
 }
 
 func (a api) accountUpdateHandler(w http.ResponseWriter, r *http.Request) {
@@ -161,23 +166,10 @@ func (a api) accountUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var upCat updateAccountRequest
-	if err := json.NewDecoder(r.Body).Decode(&upCat); err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&acc); err != nil {
 		a.logger.Error("failed to parse request json", zap.Error(err))
 		a.errorResponse(w, r, 422, err)
 		return
-	}
-
-	if upCat.Name != "" {
-		acc.Name = upCat.Name
-	}
-
-	if upCat.Note != "" {
-		acc.Note = upCat.Note
-	}
-
-	if upCat.Balance > 0 && upCat.Balance != acc.Balance {
-		acc.Balance = upCat.Balance
 	}
 
 	updatedCat, err := a.accountRepo.Update(ctx, &acc)

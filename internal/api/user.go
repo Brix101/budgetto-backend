@@ -32,7 +32,7 @@ func (a api) userListHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	catsJson, err := json.Marshal(user)
+	resJSON, err := json.Marshal(user)
 	if err != nil {
 		a.errorResponse(w, r, 500, err)
 		return
@@ -40,5 +40,5 @@ func (a api) userListHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write(catsJson)
+	w.Write(resJSON)
 }
