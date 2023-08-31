@@ -3,8 +3,6 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 
@@ -88,8 +86,6 @@ func (a api) budgetGetHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println(bud)
-
 	if bud.CreatedBy != uint(user.Sub) {
 		a.errorResponse(w, r, 403, domain.ErrForbidden)
 		return
@@ -128,20 +124,32 @@ func (a api) budgetCreateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	newCat := domain.Budget{
+	newBud := domain.Budget{
 		Amount:     reqBody.Amount,
 		CategoryID: reqBody.CategoryID,
 		CreatedBy:  userId,
 	}
 
-	cat, err := a.budgetRepo.Create(ctx, &newCat)
+	bud, err := a.budgetRepo.Create(ctx, &newBud)
 	if err != nil {
 		a.logger.Error("failed to create budget", zap.Error(err))
 		a.errorResponse(w, r, 500, err)
 		return
 	}
 
-	catJSON, err := json.Marshal(cat)
+	cat, err := a.categoryRepo.GetByID(ctx, int64(bud.CategoryID))
+	if err != nil {
+		status := 500
+		if err.Error() == domain.ErrNotFound.Error() {
+			status = 404
+		}
+		a.errorResponse(w, r, status, err)
+		return
+	}
+
+	bud.Category = cat
+
+	catJSON, err := json.Marshal(bud)
 	if err != nil {
 		a.errorResponse(w, r, 500, err)
 		return
@@ -178,32 +186,42 @@ func (a api) budgetUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var upCat updateBudgetRequest
-	if err := json.NewDecoder(r.Body).Decode(&upCat); err != nil {
+	var reqBody updateBudgetRequest
+	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 		a.logger.Error("failed to parse request json", zap.Error(err))
 		a.errorResponse(w, r, 422, err)
 		return
 	}
 	defer r.Body.Close()
 
-	if bud.Amount != upCat.Amount {
-		bud.Amount = upCat.Amount
+	if bud.Amount != reqBody.Amount {
+		bud.Amount = reqBody.Amount
 	}
 
-	if bud.CategoryID != upCat.CategoryID {
-		bud.CategoryID = upCat.CategoryID
+	if bud.CategoryID != reqBody.CategoryID {
+		bud.CategoryID = reqBody.CategoryID
 	}
 
-	log.Println(bud)
-
-	updatedCat, err := a.budgetRepo.Update(ctx, &bud)
+	updatedBud, err := a.budgetRepo.Update(ctx, &bud)
 	if err != nil {
 		a.logger.Error("failed to update budget", zap.Error(err))
 		a.errorResponse(w, r, 500, err)
 		return
 	}
 
-	catJSON, err := json.Marshal(updatedCat)
+	cat, err := a.categoryRepo.GetByID(ctx, int64(updatedBud.CategoryID))
+	if err != nil {
+		status := 500
+		if err.Error() == domain.ErrNotFound.Error() {
+			status = 404
+		}
+		a.errorResponse(w, r, status, err)
+		return
+	}
+
+	updatedBud.Category = cat
+
+	catJSON, err := json.Marshal(updatedBud)
 	if err != nil {
 		a.errorResponse(w, r, 500, err)
 		return
