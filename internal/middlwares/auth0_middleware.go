@@ -43,7 +43,7 @@ func Auth0Middleware(next http.Handler) http.Handler {
 		if err != nil {
 			log.Fatalf("Failed to set up the jwt validator")
 		}
-
+		fmt.Println("111111111111111111111111111111111111111111111111111111111111111111111")
 		// get the token from the request header
 		authHeader := r.Header.Get("Authorization")
 		authHeaderParts := strings.Split(authHeader, " ")
@@ -51,16 +51,16 @@ func Auth0Middleware(next http.Handler) http.Handler {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
-
+		fmt.Println("222222222222222222222222222222222222222222222222222222222222222222222")
 		// Validate the token
-		tokenInfo, err := jwtValidator.ValidateToken(r.Context(), authHeaderParts[1])
-		if err != nil {
-			fmt.Println(err)
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return
-		}
+		// tokenInfo, err := jwtValidator.ValidateToken(r.Context(), authHeaderParts[1])
+		// if err != nil {
+		// 	fmt.Println(err)
+		// 	http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		// 	return
+		// }
 
-		fmt.Println(tokenInfo)
+		fmt.Println(authHeaderParts[1], jwtValidator)
 		next.ServeHTTP(w, r)
 	})
 }

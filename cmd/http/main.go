@@ -63,6 +63,7 @@ func main() {
 	// Run the server
 	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		logger.Error("Server failed to start: ", zap.Error(err))
+		// log.Fatal(err)
 	}
 
 	// Wait for server context to be stopped

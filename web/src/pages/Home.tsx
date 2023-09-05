@@ -1,12 +1,12 @@
+import { Button } from "@/components/ui/button";
 import { QUERY_CATEGORIES_KEY } from "@/constant/query.constant";
 import queryClient from "@/lib/queryClient";
 import { Category } from "@/lib/validations/category";
 import { useGetCategories } from "@/services/category";
+import { useAuth0 } from "@auth0/auth0-react";
 import { useQuery } from "@tanstack/react-query";
 import { AxiosError } from "axios";
-import { Suspense } from "react";
 import {
-  Await,
   LoaderFunctionArgs,
   useAsyncError,
   useLoaderData,
@@ -17,7 +17,6 @@ type HomeLoader = {
 };
 
 export const loader = ({ request, params }: LoaderFunctionArgs): HomeLoader => {
-  console.log({ signal: request.signal, params });
   return {
     promiseData: queryClient.fetchQuery(
       [QUERY_CATEGORIES_KEY],
@@ -30,15 +29,42 @@ export const loader = ({ request, params }: LoaderFunctionArgs): HomeLoader => {
 };
 
 function Home() {
-  const { promiseData } = useLoaderData() as HomeLoader;
+  const {
+    loginWithPopup,
+    isAuthenticated,
+    logout,
+    user,
+    isLoading,
+    getAccessTokenSilently,
+    getIdTokenClaims,
+  } = useAuth0();
 
+  if (isLoading) {
+    return <div>Loading ...</div>;
+  }
+
+  getIdTokenClaims().then((res) => console.log(res));
+  getAccessTokenSilently().then((res) => console.log({ res }));
   return (
     <div>
-      <Suspense fallback={<div>Loading...</div>}>
-        <Await resolve={promiseData} errorElement={<ErrorBoundary />}>
-          <SomeView />
-        </Await>
-      </Suspense>
+      {isAuthenticated && user ? (
+        <div>
+          <img src={user.picture} alt={user.name} />
+          <h2>{user.name}</h2>
+          <p>{user.email}</p>
+        </div>
+      ) : undefined}
+      {isAuthenticated ? (
+        <Button
+          onClick={() =>
+            logout({ logoutParams: { returnTo: window.location.origin } })
+          }
+        >
+          Logout
+        </Button>
+      ) : (
+        <Button onClick={() => loginWithPopup()}>Login</Button>
+      )}
     </div>
   );
 }

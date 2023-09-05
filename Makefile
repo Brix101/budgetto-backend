@@ -1,6 +1,6 @@
 .PHONY: dev
 dev:
-	~/go/bin/air & cd web && pnpm dev --host
+	~/go/bin/air # & cd web && pnpm dev --host
 
 # .PHONY: test-unit
 # test-unit:
