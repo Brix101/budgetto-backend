@@ -10,10 +10,11 @@ import (
 )
 
 type EnvVars struct {
-	DATABASE_URL string `validate:"required" mapstructure:"DATABASE_URL"`
-	TOKEN_SECRET string `validate:"required" mapstructure:"TOKEN_SECRET"`
-	SALT         string `validate:"required" mapstructure:"SALT"`
-	PORT         string `mapstructure:"PORT"`
+	DATABASE_URL   string `validate:"required" mapstructure:"DATABASE_URL"`
+	TOKEN_SECRET   string `validate:"required" mapstructure:"TOKEN_SECRET"`
+	AUTH0_DOMAIN   string `validate:"required" mapstructure:"AUTH0_DOMAIN"`
+	AUTH0_AUDIENCE string `validate:"required" mapstructure:"AUTH0_AUDIENCE"`
+	PORT           string `mapstructure:"PORT"`
 }
 
 var config EnvVars
