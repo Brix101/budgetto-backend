@@ -60,14 +60,14 @@ func (a *api) Routes() *chi.Mux {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"http://192.168.254.180:5173"},
+		AllowedOrigins:   []string{"http://192.168.254.180:5173", "http://localhost:5173"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "Link", middlwares.BudgettoToken},
 		AllowCredentials: true,
 		MaxAge:           300, // Maximum value not ignored by any of major browsers
 	}))
 
-	r.Route("/v1", func(r chi.Router) {
+	r.Route("/api/v1", func(r chi.Router) {
 		r.Mount("/health", a.HealthRoutes())
 		r.Mount("/categories", a.CategoryRoutes())
 		r.Mount("/accounts", a.AccountRoutes())
