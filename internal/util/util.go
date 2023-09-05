@@ -12,7 +12,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func NewDatabasePool(ctx context.Context, database_url string, maxConns int) *pgxpool.Pool {
+func NewDatabasePool(ctx context.Context, database_url string, maxConns int) (*pgxpool.Pool, error) {
 	if maxConns == 0 {
 		maxConns = 1
 	}
@@ -33,12 +33,7 @@ func NewDatabasePool(ctx context.Context, database_url string, maxConns int) *pg
 	config.MaxConnLifetime = 1 * time.Hour
 	config.MaxConnIdleTime = 30 * time.Second
 
-	pool, err := pgxpool.NewWithConfig(ctx, config)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return pool
+	return pgxpool.NewWithConfig(ctx, config)
 }
 
 func NewLogger(service string) *zap.Logger {

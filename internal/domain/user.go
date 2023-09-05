@@ -47,11 +47,10 @@ type UserClaims struct {
 }
 
 type userToken struct {
-	User
-	Token string `json:"token"`
+	AccessToken string `json:"access_token"`
 }
 
-func (u User) GenerateClaims() (*userToken, error) {
+func (u User) GenerateClaims() (string, error) {
 	env := config.GetConfig()
 	claims := UserClaims{
 		int(u.ID),
@@ -68,10 +67,10 @@ func (u User) GenerateClaims() (*userToken, error) {
 	// Generate encoded token and send it as response.
 	t, err := token.SignedString([]byte(env.TOKEN_SECRET))
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	return &userToken{u, t}, nil
+	return t, nil
 }
 
 // UserRepository represents the user's repository contract

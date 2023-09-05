@@ -12,6 +12,7 @@ import (
 	"github.com/Brix101/budgetto-backend/config"
 	"github.com/Brix101/budgetto-backend/internal/api"
 	"github.com/Brix101/budgetto-backend/internal/util"
+	"go.uber.org/zap"
 )
 
 func main() {
@@ -27,8 +28,10 @@ func main() {
 	logger := util.NewLogger("api")
 	defer func() { _ = logger.Sync() }()
 
-	db := util.NewDatabasePool(ctx, env.DATABASE_URL, 16)
-
+	db, err := util.NewDatabasePool(ctx, env.DATABASE_URL, 16)
+	if err != nil {
+		logger.Error("failed to connect to database:", zap.Error(err))
+	}
 	defer db.Close()
 
 	api := api.NewAPI(ctx, logger, db)
@@ -58,9 +61,8 @@ func main() {
 
 	logger.Info("🚀🚀🚀 Server at port: " + env.PORT)
 	// Run the server
-	err := server.ListenAndServe()
-	if err != nil && err != http.ErrServerClosed {
-		log.Fatal(err)
+	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		logger.Error("Server failed to start: ", zap.Error(err))
 	}
 
 	// Wait for server context to be stopped

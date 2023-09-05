@@ -58,18 +58,29 @@ func (a api) signInHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	usrToken, err := usr.GenerateClaims()
+	token, err := usr.GenerateClaims()
 	if err != nil {
 		a.logger.Error("failed to generate user claims", zap.Error(err))
 		a.errorResponse(w, r, 500, err)
 		return
 	}
 
-	resJSON, err := json.Marshal(usrToken)
+	resJSON, err := json.Marshal(usr)
 	if err != nil {
 		a.errorResponse(w, r, 500, err)
 		return
 	}
+
+	// Create and set cookies in the response
+	cookie := http.Cookie{
+		Name:     "accessToken", // Cookie name
+		Value:    token,         // Cookie value (you can customize this)
+		Path:     "/",           // Cookie path
+		HttpOnly: true,          // Prevent JavaScript access
+		// You can set more attributes like Expires, MaxAge, Secure, etc. as needed.
+	}
+
+	http.SetCookie(w, &cookie)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)

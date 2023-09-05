@@ -14,7 +14,7 @@ import (
 func JWTMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		env := config.GetConfig()
-		tokenString := extractTokenFromHeader(r)
+		tokenString := extractTokenFromCookie(r, "accessToken")
 		if tokenString == "" {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
@@ -25,7 +25,6 @@ func JWTMiddleware(next http.Handler) http.Handler {
 			// For example, you could use a secret key or a public key
 			return []byte(env.TOKEN_SECRET), nil
 		})
-		
 
 		if err != nil || !token.Valid {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
@@ -34,9 +33,9 @@ func JWTMiddleware(next http.Handler) http.Handler {
 
 		// Set the claims in the context
 		claims, err := transformMapClaimsToUserClaims(token.Claims)
-		if err != nil {			
+		if err != nil {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return 
+			return
 		}
 
 		ctx := context.WithValue(r.Context(), "user", claims)
@@ -50,13 +49,21 @@ func extractTokenFromHeader(r *http.Request) string {
 	if authHeader == "" {
 		return ""
 	}
-	
+
 	parts := strings.Split(authHeader, " ")
 	if len(parts) != 2 || parts[0] != "Bearer" {
 		return ""
 	}
-	
+
 	return parts[1]
+}
+
+func extractTokenFromCookie(r *http.Request, cookieName string) string {
+	cookie, err := r.Cookie(cookieName)
+	if err != nil {
+		return ""
+	}
+	return cookie.Value
 }
 
 func transformMapClaimsToUserClaims(claims jwt.Claims) (*domain.UserClaims, error) {
