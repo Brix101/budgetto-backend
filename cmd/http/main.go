@@ -30,7 +30,7 @@ func main() {
 
 	db, err := util.NewDatabasePool(ctx, env.DATABASE_URL, 16)
 	if err != nil {
-		logger.Error("failed to connect to database:", zap.Error(err))
+		log.Fatal("failed to connect to database:", err)
 	}
 	defer db.Close()
 

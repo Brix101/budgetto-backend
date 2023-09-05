@@ -16,7 +16,7 @@ import (
 func (a api) CategoryRoutes() chi.Router {
 	r := chi.NewRouter()
 
-	r.Use(middlwares.JWTMiddleware)
+	r.Use(middlwares.AuthMiddleware)
 
 	r.Get("/", a.categoryListHandler)
 	r.Post("/", a.categoryCreateHandler)

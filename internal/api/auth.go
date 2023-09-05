@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/Brix101/budgetto-backend/internal/domain"
+	"github.com/Brix101/budgetto-backend/internal/middlwares"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator"
 	"go.uber.org/zap"
@@ -73,10 +74,10 @@ func (a api) signInHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Create and set cookies in the response
 	cookie := http.Cookie{
-		Name:     "accessToken", // Cookie name
-		Value:    token,         // Cookie value (you can customize this)
-		Path:     "/",           // Cookie path
-		HttpOnly: true,          // Prevent JavaScript access
+		Name:     middlwares.BudgettoToken, // Cookie name
+		Value:    token,                    // Cookie value (you can customize this)
+		Path:     "/",                      // Cookie path
+		HttpOnly: true,                     // Prevent JavaScript access
 		// You can set more attributes like Expires, MaxAge, Secure, etc. as needed.
 	}
 

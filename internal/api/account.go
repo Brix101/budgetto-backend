@@ -16,7 +16,7 @@ import (
 func (a api) AccountRoutes() chi.Router {
 	r := chi.NewRouter()
 
-	r.Use(middlwares.JWTMiddleware)
+	r.Use(middlwares.AuthMiddleware)
 
 	r.Get("/", a.accountListHandler)
 	r.Post("/", a.accountCreateHandler)

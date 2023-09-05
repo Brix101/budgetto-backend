@@ -16,7 +16,7 @@ import (
 func (a api) TransactionRoutes() chi.Router {
 	r := chi.NewRouter()
 
-	r.Use(middlwares.JWTMiddleware)
+	r.Use(middlwares.AuthMiddleware)
 
 	r.Get("/", a.transactionListHandler)
 	r.Post("/", a.transactionCreateHandler)

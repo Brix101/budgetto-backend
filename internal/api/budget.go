@@ -16,7 +16,7 @@ import (
 func (a api) BudgetRoutes() chi.Router {
 	r := chi.NewRouter()
 
-	r.Use(middlwares.JWTMiddleware)
+	r.Use(middlwares.AuthMiddleware)
 
 	r.Get("/", a.budgetListHandler)
 	r.Post("/", a.budgetCreateHandler)

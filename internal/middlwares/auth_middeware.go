@@ -11,10 +11,12 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func JWTMiddleware(next http.Handler) http.Handler {
+const BudgettoToken = "budgetto-token"
+
+func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		env := config.GetConfig()
-		tokenString := extractTokenFromCookie(r, "accessToken")
+		tokenString := extractTokenFromCookie(r)
 		if tokenString == "" {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
@@ -58,8 +60,8 @@ func extractTokenFromHeader(r *http.Request) string {
 	return parts[1]
 }
 
-func extractTokenFromCookie(r *http.Request, cookieName string) string {
-	cookie, err := r.Cookie(cookieName)
+func extractTokenFromCookie(r *http.Request) string {
+	cookie, err := r.Cookie(BudgettoToken)
 	if err != nil {
 		return ""
 	}
