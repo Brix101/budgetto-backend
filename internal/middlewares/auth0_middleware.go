@@ -1,8 +1,7 @@
-package middlwares
+package middlewares
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 	"net/url"
@@ -10,6 +9,7 @@ import (
 	"time"
 
 	"github.com/Brix101/budgetto-backend/config"
+	jwtmiddleware "github.com/auth0/go-jwt-middleware/v2"
 	"github.com/auth0/go-jwt-middleware/v2/jwks"
 	"github.com/auth0/go-jwt-middleware/v2/validator"
 )
@@ -17,12 +17,22 @@ import (
 // CustomClaims contains custom data we want from the token.
 type CustomClaims struct {
 	Scope string `json:"scope"`
+    Sub      string   `json:"sub"` 
 }
 
-// Validate does nothing for this example, but we need
-// it to satisfy validator.CustomClaims interface.
 func (c CustomClaims) Validate(ctx context.Context) error {
 	return nil
+}
+
+func (c CustomClaims) HasScope(expectedScope string) bool {
+    result := strings.Split(c.Scope, " ")
+    for i := range result {
+        if result[i] == expectedScope {
+            return true
+        }
+    }
+
+    return false
 }
 
 func Auth0Middleware(next http.Handler) http.Handler {
@@ -39,11 +49,17 @@ func Auth0Middleware(next http.Handler) http.Handler {
 			validator.RS256,
 			issuerURL.String(),
 			[]string{env.AUTH0_AUDIENCE},
+			validator.WithCustomClaims(
+				func() validator.CustomClaims {
+					return &CustomClaims{}
+				},
+			),
+			validator.WithAllowedClockSkew(time.Minute),
 		)
 		if err != nil {
 			log.Fatalf("Failed to set up the jwt validator")
 		}
-		fmt.Println("111111111111111111111111111111111111111111111111111111111111111111111")
+
 		// get the token from the request header
 		authHeader := r.Header.Get("Authorization")
 		authHeaderParts := strings.Split(authHeader, " ")
@@ -51,16 +67,20 @@ func Auth0Middleware(next http.Handler) http.Handler {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
-		fmt.Println("222222222222222222222222222222222222222222222222222222222222222222222")
-		// Validate the token
-		// tokenInfo, err := jwtValidator.ValidateToken(r.Context(), authHeaderParts[1])
-		// if err != nil {
-		// 	fmt.Println(err)
-		// 	http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		// 	return
-		// }
 
-		fmt.Println(authHeaderParts[1], jwtValidator)
-		next.ServeHTTP(w, r)
+		errorHandler := func(w http.ResponseWriter, r *http.Request, err error) {
+			log.Printf("Encountered error while validating JWT: %v", err)
+	
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusUnauthorized)			
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		}
+	
+		middleware := jwtmiddleware.New(
+			jwtValidator.ValidateToken,
+			jwtmiddleware.WithErrorHandler(errorHandler),
+		)
+
+		middleware.CheckJWT(next).ServeHTTP(w, r)
 	})
 }

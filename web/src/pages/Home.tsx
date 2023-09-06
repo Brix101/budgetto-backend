@@ -6,24 +6,21 @@ import { useGetCategories } from "@/services/category";
 import { useAuth0 } from "@auth0/auth0-react";
 import { useQuery } from "@tanstack/react-query";
 import { AxiosError } from "axios";
-import {
-  LoaderFunctionArgs,
-  useAsyncError,
-  useLoaderData,
-} from "react-router-dom";
+import { LoaderFunctionArgs, useAsyncError } from "react-router-dom";
 
 type HomeLoader = {
   promiseData: Promise<Category[]>;
 };
 
 export const loader = ({ request, params }: LoaderFunctionArgs): HomeLoader => {
+  console.log({ request, params });
   return {
     promiseData: queryClient.fetchQuery(
       [QUERY_CATEGORIES_KEY],
       useGetCategories,
       {
         staleTime: 10000,
-      },
+      }
     ),
   };
 };

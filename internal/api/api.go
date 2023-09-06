@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/Brix101/budgetto-backend/internal/domain"
-	"github.com/Brix101/budgetto-backend/internal/middlwares"
+	"github.com/Brix101/budgetto-backend/internal/middlewares"
 	"github.com/Brix101/budgetto-backend/internal/repository"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -62,7 +62,7 @@ func (a *api) Routes() *chi.Mux {
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"http://192.168.254.180:5173", "http://localhost:5173"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "Link", middlwares.BudgettoToken},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "Link", middlewares.BudgettoToken},
 		AllowCredentials: true,
 		MaxAge:           300, // Maximum value not ignored by any of major browsers
 	}))
@@ -80,3 +80,4 @@ func (a *api) Routes() *chi.Mux {
 
 	return r
 }
+

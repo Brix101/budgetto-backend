@@ -7,7 +7,7 @@ import (
 	"strconv"
 
 	"github.com/Brix101/budgetto-backend/internal/domain"
-	"github.com/Brix101/budgetto-backend/internal/middlwares"
+	"github.com/Brix101/budgetto-backend/internal/middlewares"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator"
 	"go.uber.org/zap"
@@ -16,7 +16,7 @@ import (
 func (a api) TransactionRoutes() chi.Router {
 	r := chi.NewRouter()
 
-	r.Use(middlwares.AuthMiddleware)
+	r.Use(middlewares.AuthMiddleware)
 
 	r.Get("/", a.transactionListHandler)
 	r.Post("/", a.transactionCreateHandler)
