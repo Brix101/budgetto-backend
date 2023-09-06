@@ -12,13 +12,13 @@ type Category struct {
 	// category fields
 	Name      string `json:"name" validate:"required"`
 	Note      string `json:"note,omitempty"`
-	CreatedBy *uint  `json:"-"`
+	CreatedBy *string  `json:"-"`
 }
 
 // CategoryRepository represents the categories repository contract
 type CategoryRepository interface {
 	GetByID(ctx context.Context, id int64) (Category, error)
-	GetByUserID(ctx context.Context, user_id int64) ([]Category, error)
+	GetByUserSUB(ctx context.Context, sub string) ([]Category, error)
 	// GetAll(ctx context.Context) ([]Category, error)
 
 	// CreateOrUpdate(ctx context.Context, cat *Category) error

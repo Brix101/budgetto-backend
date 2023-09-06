@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/Brix101/budgetto-backend/internal/domain"
-	"github.com/Brix101/budgetto-backend/internal/middlewares"
 	"github.com/Brix101/budgetto-backend/internal/repository"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -20,7 +19,6 @@ type api struct {
 	httpClient *http.Client
 
 	categoryRepo    domain.CategoryRepository
-	userRepo        domain.UserRepository
 	accountRepo     domain.AccountRepository
 	budgetRepo      domain.BudgetRepository
 	transactionRepo domain.TransactionRepository
@@ -28,7 +26,6 @@ type api struct {
 
 func NewAPI(ctx context.Context, logger *zap.Logger, pool *pgxpool.Pool) *api {
 	categoryRepo := repository.NewPostgresCategory(pool)
-	userRepo := repository.NewPostgresUser(pool)
 	accountRepo := repository.NewPostgresAccount(pool)
 	budgetRepo := repository.NewPostgresBudget(pool)
 	transctionRepo := repository.NewPostgresTransaction(pool)
@@ -42,7 +39,6 @@ func NewAPI(ctx context.Context, logger *zap.Logger, pool *pgxpool.Pool) *api {
 		httpClient: client,
 
 		categoryRepo:    categoryRepo,
-		userRepo:        userRepo,
 		accountRepo:     accountRepo,
 		budgetRepo:      budgetRepo,
 		transactionRepo: transctionRepo,
@@ -62,7 +58,7 @@ func (a *api) Routes() *chi.Mux {
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"http://192.168.254.180:5173", "http://localhost:5173"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "Link", middlewares.BudgettoToken},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "Link"},
 		AllowCredentials: true,
 		MaxAge:           300, // Maximum value not ignored by any of major browsers
 	}))
@@ -71,7 +67,6 @@ func (a *api) Routes() *chi.Mux {
 		r.Mount("/health", a.HealthRoutes())
 		r.Mount("/categories", a.CategoryRoutes())
 		r.Mount("/accounts", a.AccountRoutes())
-		r.Mount("/auth", a.AuthRoutes())
 		r.Mount("/budgets", a.BudgetRoutes())
 		r.Mount("/transactions", a.TransactionRoutes())
 		r.Mount("/protected", a.ProtectedRoutes())

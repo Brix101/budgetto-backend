@@ -16,7 +16,7 @@ import (
 func (a api) AccountRoutes() chi.Router {
 	r := chi.NewRouter()
 
-	r.Use(middlewares.AuthMiddleware)
+	r.Use(middlewares.Auth0Middleware)
 
 	r.Get("/", a.accountListHandler)
 	r.Post("/", a.accountCreateHandler)
@@ -37,9 +37,13 @@ func (a api) accountListHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	user := r.Context().Value("user").(*domain.UserClaims)
-
-	accs, err := a.accountRepo.GetByUserID(ctx, int64(user.Sub))
+	user,err := a.authClaims(ctx)
+	if err != nil {
+		a.errorResponse(w, r, 403, err)
+		return
+	}
+	
+	accs, err := a.accountRepo.GetByUserSUB(ctx, user.Sub)
 	if err != nil {
 		a.logger.Error("failed to fetch accounts from database", zap.Error(err))
 		a.errorResponse(w, r, 500, err)
@@ -61,7 +65,11 @@ func (a api) accountGetHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	user := r.Context().Value("user").(*domain.UserClaims)
+	user,err := a.authClaims(ctx)
+	if err != nil {
+		a.errorResponse(w, r, 403, err)
+		return
+	}
 
 	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
@@ -79,7 +87,7 @@ func (a api) accountGetHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if acc.CreatedBy != uint(user.Sub) {
+	if acc.CreatedBy != user.Sub {
 		a.errorResponse(w, r, 403, domain.ErrForbidden)
 		return
 	}
@@ -99,7 +107,11 @@ func (a api) accountCreateHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	user := r.Context().Value("user").(*domain.UserClaims)
+	user,err := a.authClaims(ctx)
+	if err != nil {
+		a.errorResponse(w, r, 403, err)
+		return
+	}
 
 	reqBody := createAccountRequest{}
 
@@ -119,7 +131,7 @@ func (a api) accountCreateHandler(w http.ResponseWriter, r *http.Request) {
 		Name:      reqBody.Name,
 		Balance:   reqBody.Balance,
 		Note:      reqBody.Note,
-		CreatedBy: uint(user.Sub),
+		CreatedBy: user.Sub,
 	}
 
 	acc, err := a.accountRepo.Create(ctx, &newAcc)
@@ -143,7 +155,11 @@ func (a api) accountUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	user := r.Context().Value("user").(*domain.UserClaims)
+	user,err := a.authClaims(ctx)
+	if err != nil {
+		a.errorResponse(w, r, 403, err)
+		return
+	}
 
 	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
@@ -161,7 +177,7 @@ func (a api) accountUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if acc.CreatedBy != uint(user.Sub) {
+	if acc.CreatedBy != user.Sub {
 		a.errorResponse(w, r, 403, domain.ErrForbidden)
 		return
 	}
@@ -192,8 +208,11 @@ func (a api) accountUpdateHandler(w http.ResponseWriter, r *http.Request) {
 func (a api) accountDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
-
-	user := r.Context().Value("user").(*domain.UserClaims)
+	user,err := a.authClaims(ctx)
+	if err != nil {
+		a.errorResponse(w, r, 403, err)
+		return
+	}
 
 	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
@@ -211,7 +230,7 @@ func (a api) accountDeleteHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if acc.CreatedBy != uint(user.Sub) {
+	if acc.CreatedBy != user.Sub {
 		a.errorResponse(w, r, 403, domain.ErrForbidden)
 		return
 	}

@@ -16,7 +16,7 @@ import (
 func (a api) BudgetRoutes() chi.Router {
 	r := chi.NewRouter()
 
-	r.Use(middlewares.AuthMiddleware)
+	r.Use(middlewares.Auth0Middleware)
 
 	r.Get("/", a.budgetListHandler)
 	r.Post("/", a.budgetCreateHandler)
@@ -36,9 +36,13 @@ func (a api) budgetListHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	user := r.Context().Value("user").(*domain.UserClaims)
+	user,err := a.authClaims(ctx)
+	if err != nil {
+		a.errorResponse(w, r, 403, err)
+		return
+	}
 
-	buds, err := a.budgetRepo.GetByUserID(ctx, int64(user.Sub))
+	buds, err := a.budgetRepo.GetByUserSUB(ctx, user.Sub)
 	if err != nil {
 		a.logger.Error("failed to fetch budgets from database", zap.Error(err))
 		a.errorResponse(w, r, 500, err)
@@ -60,7 +64,11 @@ func (a api) budgetGetHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	user := r.Context().Value("user").(*domain.UserClaims)
+	user,err := a.authClaims(ctx)
+	if err != nil {
+		a.errorResponse(w, r, 403, err)
+		return
+	}
 
 	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
@@ -81,7 +89,7 @@ func (a api) budgetGetHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if bud.CreatedBy != uint(user.Sub) {
+	if bud.CreatedBy != user.Sub {
 		a.errorResponse(w, r, 403, domain.ErrForbidden)
 		return
 	}
@@ -101,9 +109,12 @@ func (a api) budgetCreateHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	user := r.Context().Value("user").(*domain.UserClaims)
+	user,err := a.authClaims(ctx)
+	if err != nil {
+		a.errorResponse(w, r, 403, err)
+		return
+	}
 
-	userId := uint(user.Sub)
 	reqBody := createBudgetRequest{}
 
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
@@ -122,7 +133,7 @@ func (a api) budgetCreateHandler(w http.ResponseWriter, r *http.Request) {
 	budReq := domain.Budget{
 		Amount:     reqBody.Amount,
 		CategoryID: reqBody.CategoryID,
-		CreatedBy:  userId,
+		CreatedBy:  user.Sub,
 	}
 
 	newBud, err := a.budgetRepo.Create(ctx, &budReq)
@@ -152,7 +163,11 @@ func (a api) budgetUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	user := r.Context().Value("user").(*domain.UserClaims)
+	user,err := a.authClaims(ctx)
+	if err != nil {
+		a.errorResponse(w, r, 403, err)
+		return
+	}
 
 	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
@@ -170,7 +185,7 @@ func (a api) budgetUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if bud.CreatedBy != uint(user.Sub) {
+	if bud.CreatedBy != user.Sub {
 		a.errorResponse(w, r, 403, domain.ErrForbidden)
 		return
 	}
@@ -216,7 +231,11 @@ func (a api) budgetDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	user := r.Context().Value("user").(*domain.UserClaims)
+	user,err := a.authClaims(ctx)
+	if err != nil {
+		a.errorResponse(w, r, 403, err)
+		return
+	}
 
 	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
@@ -234,7 +253,7 @@ func (a api) budgetDeleteHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if bud.CreatedBy != uint(user.Sub) {
+	if bud.CreatedBy != user.Sub {
 		a.errorResponse(w, r, 403, domain.ErrForbidden)
 		return
 	}

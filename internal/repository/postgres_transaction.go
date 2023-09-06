@@ -110,7 +110,7 @@ func (p *postgresTransactionRepository) GetByID(ctx context.Context, id int64) (
 	return trns[0], nil
 }
 
-func (p *postgresTransactionRepository) GetByUserID(ctx context.Context, user_id int64) ([]domain.Transaction, error) {
+func (p *postgresTransactionRepository) GetByUserSUB(ctx context.Context, sub string) ([]domain.Transaction, error) {
 	query := `
 		SELECT 
 			T.ID,
@@ -141,7 +141,7 @@ func (p *postgresTransactionRepository) GetByUserID(ctx context.Context, user_id
 			T.created_by = $1 
 			AND T.is_deleted = FALSE;`
 
-	trns, err := p.fetch(ctx, query, user_id)
+	trns, err := p.fetch(ctx, query, sub)
 	if err != nil {
 		return []domain.Transaction{}, err
 	}

@@ -16,7 +16,7 @@ import (
 func (a api) CategoryRoutes() chi.Router {
 	r := chi.NewRouter()
 
-	r.Use(middlewares.AuthMiddleware)
+	r.Use(middlewares.Auth0Middleware)
 
 	r.Get("/", a.categoryListHandler)
 	r.Post("/", a.categoryCreateHandler)
@@ -36,9 +36,13 @@ func (a api) categoryListHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	user := r.Context().Value("user").(*domain.UserClaims)
+	user,err := a.authClaims(ctx)
+	if err != nil {
+		a.errorResponse(w, r, 403, err)
+		return
+	}
 
-	cats, err := a.categoryRepo.GetByUserID(ctx, int64(user.Sub))
+	cats, err := a.categoryRepo.GetByUserSUB(ctx, user.Sub)
 	if err != nil {
 		a.logger.Error("failed to fetch categories from database", zap.Error(err))
 		a.errorResponse(w, r, 500, err)
@@ -60,7 +64,11 @@ func (a api) categoryGetHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	user := r.Context().Value("user").(*domain.UserClaims)
+	user,err := a.authClaims(ctx)
+	if err != nil {
+		a.errorResponse(w, r, 403, err)
+		return
+	}
 
 	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
@@ -78,7 +86,7 @@ func (a api) categoryGetHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if cat.ID != uint(user.Sub) {
+	if *cat.CreatedBy != user.Sub {
 		a.errorResponse(w, r, 403, domain.ErrForbidden)
 		return
 	}
@@ -98,8 +106,11 @@ func (a api) categoryCreateHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	user := r.Context().Value("user").(*domain.UserClaims)
-	userId := uint(user.Sub)
+	user,err := a.authClaims(ctx)
+	if err != nil {
+		a.errorResponse(w, r, 403, err)
+		return
+	}
 
 	reqBody := createCategoryRequest{}
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
@@ -118,7 +129,7 @@ func (a api) categoryCreateHandler(w http.ResponseWriter, r *http.Request) {
 	newCat := domain.Category{
 		Name:      reqBody.Name,
 		Note:      reqBody.Note,
-		CreatedBy: &userId,
+		CreatedBy: &user.Sub,
 	}
 
 	cat, err := a.categoryRepo.Create(ctx, &newCat)
@@ -142,7 +153,11 @@ func (a api) categoryUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	user := r.Context().Value("user").(*domain.UserClaims)
+	user,err := a.authClaims(ctx)
+	if err != nil {
+		a.errorResponse(w, r, 403, err)
+		return
+	}
 
 	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
@@ -160,7 +175,7 @@ func (a api) categoryUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if *cat.CreatedBy != uint(user.Sub) {
+	if *cat.CreatedBy != user.Sub {
 		a.errorResponse(w, r, 403, domain.ErrForbidden)
 		return
 	}
@@ -193,8 +208,11 @@ func (a api) categoryUpdateHandler(w http.ResponseWriter, r *http.Request) {
 func (a api) categoryDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
-
-	user := r.Context().Value("user").(*domain.UserClaims)
+	user,err := a.authClaims(ctx)
+	if err != nil {
+		a.errorResponse(w, r, 403, err)
+		return
+	}
 
 	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
@@ -212,7 +230,7 @@ func (a api) categoryDeleteHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if *cat.CreatedBy != uint(user.Sub) {
+	if *cat.CreatedBy != user.Sub {
 		a.errorResponse(w, r, 403, domain.ErrForbidden)
 		return
 	}

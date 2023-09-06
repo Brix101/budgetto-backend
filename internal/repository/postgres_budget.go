@@ -88,7 +88,7 @@ func (p *postgresBudgetRepository) GetByID(ctx context.Context, id int64) (domai
 	return buds[0], nil
 }
 
-func (p *postgresBudgetRepository) GetByUserID(ctx context.Context, user_id int64) ([]domain.Budget, error) {
+func (p *postgresBudgetRepository) GetByUserSUB(ctx context.Context, sub string) ([]domain.Budget, error) {
 	query := `
 		SELECT
 			b.ID,
@@ -111,7 +111,7 @@ func (p *postgresBudgetRepository) GetByUserID(ctx context.Context, user_id int6
 		ORDER BY
 			C.NAME ASC;`
 
-	buds, err := p.fetch(ctx, query, user_id)
+	buds, err := p.fetch(ctx, query, sub)
 	if err != nil {
 		return []domain.Budget{}, err
 	}

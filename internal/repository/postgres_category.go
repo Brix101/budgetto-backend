@@ -79,7 +79,7 @@ func (p *postgresCategoryRepository) GetByID(ctx context.Context, id int64) (dom
 	return cat[0], nil
 }
 
-func (p *postgresCategoryRepository) GetByUserID(ctx context.Context, user_id int64) ([]domain.Category, error) {
+func (p *postgresCategoryRepository) GetByUserSUB(ctx context.Context, sub string) ([]domain.Category, error) {
 	query := `
 		SELECT
 			id,
@@ -97,7 +97,7 @@ func (p *postgresCategoryRepository) GetByUserID(ctx context.Context, user_id in
 		ORDER BY
 			name ASC`
 
-	cats, err := p.fetch(ctx, query, user_id)
+	cats, err := p.fetch(ctx, query, sub)
 	if err != nil {
 		return []domain.Category{}, err
 	}

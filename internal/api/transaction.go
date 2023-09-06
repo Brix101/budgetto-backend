@@ -16,7 +16,7 @@ import (
 func (a api) TransactionRoutes() chi.Router {
 	r := chi.NewRouter()
 
-	r.Use(middlewares.AuthMiddleware)
+	r.Use(middlewares.Auth0Middleware)
 
 	r.Get("/", a.transactionListHandler)
 	r.Post("/", a.transactionCreateHandler)
@@ -62,9 +62,13 @@ func (a api) transactionListHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	user := r.Context().Value("user").(*domain.UserClaims)
+	user,err := a.authClaims(ctx)
+	if err != nil {
+		a.errorResponse(w, r, 403, err)
+		return
+	}
 
-	trns, err := a.transactionRepo.GetByUserID(ctx, int64(user.Sub))
+	trns, err := a.transactionRepo.GetByUserSUB(ctx, user.Sub)
 	if err != nil {
 		a.logger.Error("failed to fetch transactions from database", zap.Error(err))
 		a.errorResponse(w, r, 500, err)
@@ -86,7 +90,11 @@ func (a api) transactionGetHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	user := r.Context().Value("user").(*domain.UserClaims)
+	user,err := a.authClaims(ctx)
+	if err != nil {
+		a.errorResponse(w, r, 403, err)
+		return
+	}
 
 	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
@@ -107,7 +115,7 @@ func (a api) transactionGetHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if trn.CreatedBy != uint(user.Sub) {
+	if trn.CreatedBy != user.Sub {
 		a.errorResponse(w, r, 403, domain.ErrForbidden)
 		return
 	}
@@ -127,9 +135,12 @@ func (a api) transactionCreateHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	user := r.Context().Value("user").(*domain.UserClaims)
+	user,err := a.authClaims(ctx)
+	if err != nil {
+		a.errorResponse(w, r, 403, err)
+		return
+	}
 
-	userId := uint(user.Sub)
 	reqBody := createTransactionRequest{}
 
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
@@ -149,7 +160,7 @@ func (a api) transactionCreateHandler(w http.ResponseWriter, r *http.Request) {
 		Amount:     reqBody.Amount,
 		CategoryID: reqBody.CategoryID,
 		AccountID:  reqBody.AccountID,
-		CreatedBy:  userId,
+		CreatedBy:  user.Sub,
 	}
 
 	newTrn, err := a.transactionRepo.Create(ctx, &trnReq)
@@ -179,7 +190,11 @@ func (a api) transactionUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	user := r.Context().Value("user").(*domain.UserClaims)
+	user,err := a.authClaims(ctx)
+	if err != nil {
+		a.errorResponse(w, r, 403, err)
+		return
+	}
 
 	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
@@ -197,7 +212,7 @@ func (a api) transactionUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if reqTrn.CreatedBy != uint(user.Sub) {
+	if reqTrn.CreatedBy != user.Sub {
 		a.errorResponse(w, r, 403, domain.ErrForbidden)
 		return
 	}
@@ -237,7 +252,11 @@ func (a api) transactionDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	user := r.Context().Value("user").(*domain.UserClaims)
+	user,err := a.authClaims(ctx)
+	if err != nil {
+		a.errorResponse(w, r, 403, err)
+		return
+	}
 
 	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
@@ -255,7 +274,7 @@ func (a api) transactionDeleteHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if trn.CreatedBy != uint(user.Sub) {
+	if trn.CreatedBy != user.Sub {
 		a.errorResponse(w, r, 403, domain.ErrForbidden)
 		return
 	}

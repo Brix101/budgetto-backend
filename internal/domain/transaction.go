@@ -13,7 +13,7 @@ type Transaction struct {
 	Operation  string  `json:"operation"`
 	AccountID  uint    `json:"-"`
 	CategoryID uint    `json:"-"`
-	CreatedBy  uint    `json:"-"`
+	CreatedBy  string    `json:"-"`
 
 	Account  Account  `json:"account,omitempty"`
 	Category Category `json:"category,omitempty"`
@@ -22,7 +22,7 @@ type Transaction struct {
 // TransactionRepository represents the transactions repository contract
 type TransactionRepository interface {
 	GetByID(ctx context.Context, id int64) (Transaction, error)
-	GetByUserID(ctx context.Context, user_id int64) ([]Transaction, error)
+	GetByUserSUB(ctx context.Context, sub string) ([]Transaction, error)
 	GetOperationType(ctx context.Context) ([]string, error)
 	// GetAll(ctx context.Context) ([]Transaction, error)
 
