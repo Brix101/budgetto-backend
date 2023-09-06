@@ -86,7 +86,7 @@ func (a api) categoryGetHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if *cat.CreatedBy != user.Sub {
+	if cat.CreatedBy !=nil&&*cat.CreatedBy != user.Sub {
 		a.errorResponse(w, r, 403, domain.ErrForbidden)
 		return
 	}
@@ -175,7 +175,7 @@ func (a api) categoryUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if *cat.CreatedBy != user.Sub {
+	if cat.CreatedBy == nil || *cat.CreatedBy != user.Sub {
 		a.errorResponse(w, r, 403, domain.ErrForbidden)
 		return
 	}
@@ -230,7 +230,7 @@ func (a api) categoryDeleteHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if *cat.CreatedBy != user.Sub {
+	if cat.CreatedBy == nil || *cat.CreatedBy != user.Sub {
 		a.errorResponse(w, r, 403, domain.ErrForbidden)
 		return
 	}
