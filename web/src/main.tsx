@@ -13,7 +13,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     clientId={import.meta.env.VITE_AUTH0_CLIENT_ID}
     authorizationParams={{
       audience: import.meta.env.VITE_AUTH0_AUDIENCE,
-      redirect_uri: window.location.origin,
+      redirect_uri: window.location.origin + "/dashboard",
     }}
   >
     <React.StrictMode>

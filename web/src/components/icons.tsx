@@ -1,8 +1,31 @@
-import { Eye, EyeOff } from "lucide-react";
+import {
+  ChevronLeft,
+  CreditCard,
+  DollarSign,
+  Eye,
+  EyeOff,
+  FileTerminal,
+  LogOut,
+  MoveLeft,
+  Settings,
+  ShoppingBag,
+  User,
+} from "lucide-react";
 
 type IconProps = React.HTMLAttributes<SVGElement>;
 
 export const Icons = {
+  chevronLeft: ChevronLeft,
+  view: Eye,
+  hide: EyeOff,
+  moveLeft: MoveLeft,
+  user: User,
+  terminal: FileTerminal,
+  settings: Settings,
+  logout: LogOut,
+  store: ShoppingBag,
+  billing: CreditCard,
+  dollarSign: DollarSign,
   logo: (props: IconProps) => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" {...props}>
       <rect width="256" height="256" fill="none" />
@@ -141,6 +164,4 @@ export const Icons = {
       <path d="M21 12a9 9 0 1 1-6.219-8.56" />
     </svg>
   ),
-  view: Eye,
-  hide: EyeOff,
 };
