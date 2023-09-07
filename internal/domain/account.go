@@ -9,7 +9,7 @@ type Account struct {
 	Name      string  `json:"name"`
 	Balance   float64 `json:"balance"`
 	Note      string  `json:"note,omitempty"`
-	CreatedBy string    `json:"-"`
+	CreatedBy string  `json:"created_by"`
 }
 
 // AccountRepository represents the account's repository contract

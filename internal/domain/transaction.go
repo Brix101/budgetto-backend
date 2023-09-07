@@ -13,7 +13,7 @@ type Transaction struct {
 	Operation  string  `json:"operation"`
 	AccountID  uint    `json:"-"`
 	CategoryID uint    `json:"-"`
-	CreatedBy  string    `json:"-"`
+	CreatedBy  string  `json:"created_by"`
 
 	Account  Account  `json:"account,omitempty"`
 	Category Category `json:"category,omitempty"`

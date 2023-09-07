@@ -8,7 +8,7 @@ type Budget struct {
 	// budget fields
 	Amount     float64 `json:"amount"`
 	CategoryID uint    `json:"-"`
-	CreatedBy  string    `json:"-"`
+	CreatedBy  string  `json:"created_by"`
 
 	Category Category `json:"category,omitempty"`
 }
