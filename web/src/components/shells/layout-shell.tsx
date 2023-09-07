@@ -1,53 +1,13 @@
-import { type SidebarNavItem } from "@/types";
-
 import { SidebarNav } from "@/components/layouts/sidebar-nav";
 import { SiteHeader } from "@/components/layouts/site-header";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { dashboardConfig } from "@/config/siteconfig";
 import { useAuth0 } from "@auth0/auth0-react";
 import { Outlet } from "react-router-dom";
 import { MainNav } from "../layouts/main-nav";
 import { PageHeader } from "../page-header";
 import { Skeleton } from "../ui/skeleton";
 import { Shell } from "./shell";
-
-export interface DashboardConfig {
-  sidebarNav: SidebarNavItem[];
-}
-
-export const dashboardConfig: DashboardConfig = {
-  sidebarNav: [
-    {
-      title: "Dashboard",
-      href: "/dashboard",
-      icon: "terminal",
-      items: [],
-    },
-    {
-      title: "Transactions",
-      href: "/dashboard/transactions",
-      icon: "transaction",
-      items: [],
-    },
-    {
-      title: "Budgets",
-      href: "/dashboard/budgets",
-      icon: "dollarSign",
-      items: [],
-    },
-    {
-      title: "Accounts",
-      href: "/dashboard/accounts",
-      icon: "account",
-      items: [],
-    },
-    {
-      title: "Categories",
-      href: "/dashboard/categories",
-      icon: "category",
-      items: [],
-    },
-  ],
-};
 
 export function DashboardShell() {
   const auth = useAuth0();
@@ -104,9 +64,9 @@ function DashboardShellLoader() {
               aria-labelledby="dashboard-stores-page-header-heading"
             >
               <div className="flex space-x-4">
-                <Skeleton className="h-10 w-[350px] " />
+                <Skeleton className="h-10 w-64" />
               </div>
-              <Skeleton className="h-4 w-52" />
+              <Skeleton className="h-4 w-36" />
             </PageHeader>
             <section></section>
           </Shell>
