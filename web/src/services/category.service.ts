@@ -7,7 +7,9 @@ import {
   categoriesSchema,
   categorySchema,
   createCategorySchema,
+  updateCategorySchema,
 } from "@/lib/validations/category";
+import { Message } from "@/types/message";
 import { Auth0ContextInterface, User, useAuth0 } from "@auth0/auth0-react";
 import { UseQueryOptions, useQuery } from "@tanstack/react-query";
 import { AxiosError } from "axios";
@@ -56,4 +58,40 @@ export const createCategory = async ({
   });
 
   return categorySchema.parse(res.data);
+};
+
+export const updateCategory = async ({
+  auth,
+  category: { id, ...rest },
+}: {
+  auth: Auth0ContextInterface<User>;
+  category: z.infer<typeof updateCategorySchema>;
+}) => {
+  const token = await auth.getAccessTokenSilently();
+
+  const res = await api.put(`v1/categories/${id}`, JSON.stringify(rest), {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return categorySchema.parse(res.data);
+};
+
+export const deleteCategory = async ({
+  auth,
+  id,
+}: {
+  auth: Auth0ContextInterface<User>;
+  id: number;
+}) => {
+  const token = await auth.getAccessTokenSilently();
+
+  const res = await api.delete(`v1/categories/${id}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return res.data as Message;
 };

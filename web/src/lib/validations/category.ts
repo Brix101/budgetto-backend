@@ -19,3 +19,9 @@ export const createCategorySchema = z.object({
   name: z.string().nonempty({ message: "Please input a valid name." }),
   note: z.string(),
 });
+
+export const updateCategorySchema = z.object({
+  id: z.number(),
+  name: z.string().nonempty({ message: "Please input a valid name." }),
+  note: z.string(),
+});
