@@ -4,7 +4,6 @@ import { createCategory } from "@/services/category.service";
 import { useAuth0 } from "@auth0/auth0-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
@@ -33,6 +32,7 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
+import { useBoundStore } from "@/lib/store";
 
 type Inputs = z.infer<typeof createCategorySchema>;
 
@@ -40,7 +40,9 @@ export function CategoryCreateDialog() {
   const auth = useAuth0();
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const [open, setOpen] = useState(false);
+
+  const { mode, setMode } = useBoundStore((state) => state.category);
+
   const form = useForm<Inputs>({
     resolver: zodResolver(createCategorySchema),
     defaultValues: {
@@ -57,7 +59,7 @@ export function CategoryCreateDialog() {
         return [category, ...categories];
       });
 
-      setOpen(false);
+      setMode({ mode: "view" });
       toast({
         title: "Created successfully",
         description: `category ${category.name} created successfully`,
@@ -72,11 +74,13 @@ export function CategoryCreateDialog() {
     mutate({ auth, category: data });
   }
 
+  function handleCancelClick() {
+    setMode({ mode: "view" });
+    form.reset();
+  }
+
   return (
-    <AlertDialog open={open} onOpenChange={setOpen}>
-      <AlertDialogTrigger asChild>
-        <Button size="sm">Create category</Button>
-      </AlertDialogTrigger>
+    <AlertDialog open={mode === "create"}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Create category</AlertDialogTitle>
@@ -123,9 +127,14 @@ export function CategoryCreateDialog() {
                 )}
               />
               <AlertDialogFooter>
-                <AlertDialogCancel disabled={isLoading}>
+                <Button
+                  type="button"
+                  disabled={isLoading}
+                  variant={"outline"}
+                  onClick={handleCancelClick}
+                >
                   Cancel
-                </AlertDialogCancel>
+                </Button>
                 <Button disabled={isLoading}>
                   {isLoading && (
                     <Icons.spinner
@@ -146,9 +155,17 @@ export function CategoryCreateDialog() {
 }
 
 export function CategoryDeleteDialog() {
-  const [open, setOpen] = useState(false);
+  const { mode, category, setMode } = useBoundStore((state) => state.category);
+
+  function handleCancelClick() {
+    setMode({ mode: "view" });
+  }
+
+  if (category) {
+    console.log({ mode, category });
+  }
   return (
-    <AlertDialog open={open} onOpenChange={setOpen}>
+    <AlertDialog open={mode === "delete"}>
       <AlertDialogTrigger asChild>
         <Button variant="outline">Show Dialog</Button>
       </AlertDialogTrigger>
@@ -157,12 +174,48 @@ export function CategoryDeleteDialog() {
           <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
           <AlertDialogDescription>
             This action cannot be undone. This will permanently delete your
-            account and remove your data from our servers.
+            cateory and remove your data from our servers.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction>Continue</AlertDialogAction>
+          <Button variant={"destructive"}>Continue</Button>
+          <AlertDialogCancel onClick={handleCancelClick}>
+            Cancel
+          </AlertDialogCancel>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+export function CategoryUpdateDialog() {
+  const { mode, category, setMode } = useBoundStore((state) => state.category);
+
+  function handleCancelClick() {
+    setMode({ mode: "view" });
+  }
+
+  if (category) {
+    console.log({ mode, category });
+  }
+  return (
+    <AlertDialog open={mode === "update"}>
+      <AlertDialogTrigger asChild>
+        <Button variant="outline">Show Dialog</Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This action cannot be undone. This will permanently delete your
+            cateory and remove your data from our servers.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={handleCancelClick}>
+            Cancel
+          </AlertDialogCancel>
+          <AlertDialogAction>Update</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

@@ -1,18 +1,27 @@
-
 import { DataTable } from "@/components/data-table";
 import { categoryColumns } from "@/components/data-table/colums";
-import { CategoryCreateDialog } from "@/components/forms/category-form";
+import {
+  CategoryCreateDialog,
+  CategoryDeleteDialog,
+  CategoryUpdateDialog,
+} from "@/components/forms/category-form";
 import {
   PageHeader,
   PageHeaderDescription,
   PageHeaderHeading,
 } from "@/components/page-header";
 import { Shell } from "@/components/shells/shell";
+import { Button } from "@/components/ui/button";
+import { useBoundStore } from "@/lib/store";
 import { useQueryCategories } from "@/services/category.service";
 
-
 function CategoryPage() {
+  const { setMode } = useBoundStore((state) => state.category);
   const { data } = useQueryCategories();
+
+  function handleCreateClick() {
+    setMode({ mode: "create" });
+  }
 
   return (
     <Shell variant="sidebar">
@@ -24,7 +33,9 @@ function CategoryPage() {
           <PageHeaderHeading size="sm" className="flex-1">
             Categories
           </PageHeaderHeading>
-          <CategoryCreateDialog />
+          <Button size="sm" onClick={handleCreateClick}>
+            Create category
+          </Button>
         </div>
         <PageHeaderDescription size="sm">
           Manage your categories
@@ -34,11 +45,18 @@ function CategoryPage() {
         id="dashboard-categories-page-categories"
         aria-labelledby="dashboard-categories-page-categories-heading"
       >
-        <DataTable data={data ?? []} columns={categoryColumns} searchPlaceHolder="Filter categories..."/>
+        <DataTable
+          data={data ?? []}
+          columns={categoryColumns}
+          searchPlaceHolder="Filter categories..."
+        />
+
+        <CategoryCreateDialog />
+        <CategoryDeleteDialog />
+        <CategoryUpdateDialog />
       </section>
     </Shell>
   );
 }
-
 
 export default CategoryPage;

@@ -2,7 +2,7 @@ import { Category } from "@/lib/validations/category";
 import { ColumnDef } from "@tanstack/react-table";
 
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
-import { DataTableRowActions } from "@/components/data-table/data-table-row-actions.tsx";
+import { CategoryDataTableRowActions } from "@/components/data-table/data-table-row-actions.tsx";
 
 export const categoryColumns: ColumnDef<Category>[] = [
   {
@@ -33,6 +33,6 @@ export const categoryColumns: ColumnDef<Category>[] = [
   },
   {
     id: "actions",
-    cell: ({ row }) => <DataTableRowActions row={row} />,
+    cell: ({ row }) => <CategoryDataTableRowActions row={row} />,
   },
 ];

@@ -10,19 +10,30 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useBoundStore } from "@/lib/store";
+import { Category } from "@/lib/validations/category";
 
 interface DataTableRowActionsProps<TData> {
   row: Row<TData>;
 }
 
-export function DataTableRowActions<TData>({
+export function CategoryDataTableRowActions<TData>({
   row,
 }: DataTableRowActionsProps<TData>) {
+  const { setMode } = useBoundStore((state) => state.category);
   const original = row.original as object;
-  const created_by = Object.keys(original).find((key) => key === "created_by");
+  const isCreated = Object.keys(original).find((key) => key === "created_by");
 
-  if (!created_by) {
+  if (!isCreated) {
     return <></>;
+  }
+
+  function handleEditClick() {
+    setMode({ mode: "update", category: original as Category });
+  }
+
+  function handleDeleteClick() {
+    setMode({ mode: "delete", category: original as Category });
   }
 
   return (
@@ -37,9 +48,9 @@ export function DataTableRowActions<TData>({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-[160px]">
-        <DropdownMenuItem>Edit</DropdownMenuItem>
+        <DropdownMenuItem onClick={handleEditClick}>Edit</DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
+        <DropdownMenuItem onClick={handleDeleteClick}>
           Delete
           <DropdownMenuShortcut></DropdownMenuShortcut>
         </DropdownMenuItem>
