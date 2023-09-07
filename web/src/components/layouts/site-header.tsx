@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ModeToggle } from "../mode-toggle";
 
 interface SiteHeaderProps {
   auth: Auth0ContextInterface<User>;
@@ -34,6 +35,7 @@ export function SiteHeader({ auth }: SiteHeaderProps) {
         <MainNav />
         <div className="flex flex-1 items-center justify-end space-x-4">
           <nav className="flex items-center space-x-2">
+            <ModeToggle />
             {auth.isLoading ? (
               <Skeleton className="h-10 w-14" />
             ) : (
@@ -73,7 +75,7 @@ export function SiteHeader({ auth }: SiteHeaderProps) {
                       </DropdownMenuLabel>
                       <DropdownMenuSeparator />
                       <DropdownMenuGroup>
-                        <DropdownMenuItem asChild disabled>
+                        <DropdownMenuItem asChild disabled className="hidden">
                           <Link to="/dashboard/profile">
                             <Icons.user
                               className="mr-2 h-4 w-4"

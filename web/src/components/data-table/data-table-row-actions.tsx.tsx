@@ -1,4 +1,3 @@
-import { Category } from "@/lib/validations/category";
 import { Row } from "@tanstack/react-table";
 
 import { Icons } from "@/components/icons";
@@ -19,10 +18,10 @@ interface DataTableRowActionsProps<TData> {
 export function DataTableRowActions<TData>({
   row,
 }: DataTableRowActionsProps<TData>) {
-  const data = row.original as Category;
-  const isEditable = Boolean(data.created_by);
+  const original = row.original as object;
+  const created_by = Object.keys(original).find((key) => key === "created_by");
 
-  if (!isEditable) {
+  if (!created_by) {
     return <></>;
   }
 
@@ -33,7 +32,7 @@ export function DataTableRowActions<TData>({
           variant="ghost"
           className="flex h-8 w-8 p-0 data-[state=open]:bg-muted"
         >
-          <Icons.horizontalThreeDots className="h-5 w-5" />
+          <Icons.horizontalThreeDots className="h-4 w-4" />
           <span className="sr-only">Open menu</span>
         </Button>
       </DropdownMenuTrigger>

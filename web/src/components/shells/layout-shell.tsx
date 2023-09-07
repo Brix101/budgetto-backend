@@ -64,10 +64,11 @@ function DashboardShellLoader() {
               id="dashboard-stores-page-header"
               aria-labelledby="dashboard-stores-page-header-heading"
             >
-              <div className="flex space-x-4">
+              <div className="flex space-x-4 justify-between">
                 <Skeleton className="h-10 w-64" />
+                <Skeleton className="h-10 w-40" />
               </div>
-              <Skeleton className="h-4 w-36" />
+              <Skeleton className="h-5 w-36" />
             </PageHeader>
             <section></section>
           </Shell>

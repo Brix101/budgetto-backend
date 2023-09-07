@@ -6,10 +6,12 @@ import { Input } from "@/components/ui/input";
 
 interface DataTableToolbarProps<TData> {
   table: Table<TData>;
+  placeHolder?: string;
 }
 
 export function DataTableToolbar<TData>({
   table,
+  placeHolder,
 }: DataTableToolbarProps<TData>) {
   const isFiltered = table.getState().columnFilters.length > 0;
 
@@ -17,7 +19,7 @@ export function DataTableToolbar<TData>({
     <div className="flex items-center justify-between">
       <div className="relative ml-2">
         <Input
-          placeholder="Filter categories..."
+          placeholder={placeHolder ? placeHolder : "Filter..."}
           value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
             table.getColumn("name")?.setFilterValue(event.target.value)
@@ -27,6 +29,7 @@ export function DataTableToolbar<TData>({
         {isFiltered && (
           <Button
             variant="ghost"
+            size={"icon"}
             onClick={() => table.resetColumnFilters()}
             className="absolute right-0 top-0 h-full px-3 py-1 hover:bg-transparent"
           >

@@ -1,7 +1,7 @@
 
 import { DataTable } from "@/components/data-table";
 import { categoryColumns } from "@/components/data-table/colums";
-import { CategoryCreateDialog } from "@/components/forms/category-create";
+import { CategoryCreateDialog } from "@/components/forms/category-form";
 import {
   PageHeader,
   PageHeaderDescription,
@@ -17,8 +17,8 @@ function CategoryPage() {
   return (
     <Shell variant="sidebar">
       <PageHeader
-        id="dashboard-stores-page-header"
-        aria-labelledby="dashboard-stores-page-header-heading"
+        id="dashboard-categories-page-header"
+        aria-labelledby="dashboard-categories-page-header-heading"
       >
         <div className="flex space-x-4">
           <PageHeaderHeading size="sm" className="flex-1">
@@ -31,10 +31,10 @@ function CategoryPage() {
         </PageHeaderDescription>
       </PageHeader>
       <section
-        id="dashboard-stores-page-stores"
-        aria-labelledby="dashboard-stores-page-stores-heading"
+        id="dashboard-categories-page-categories"
+        aria-labelledby="dashboard-categories-page-categories-heading"
       >
-        <DataTable data={data ?? []} columns={categoryColumns} />
+        <DataTable data={data ?? []} columns={categoryColumns} searchPlaceHolder="Filter categories..."/>
       </section>
     </Shell>
   );

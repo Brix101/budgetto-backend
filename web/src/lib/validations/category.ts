@@ -16,6 +16,6 @@ export const categoriesSchema = z.object({
 });
 
 export const createCategorySchema = z.object({
-  name: z.string(),
+  name: z.string().nonempty({ message: "Please input a valid name." }),
   note: z.string(),
 });

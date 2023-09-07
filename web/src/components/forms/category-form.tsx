@@ -1,4 +1,9 @@
+import { QUERY_CATEGORIES_KEY } from "@/constant/query.constant";
+import { Category, createCategorySchema } from "@/lib/validations/category";
+import { createCategory } from "@/services/category.service";
+import { useAuth0 } from "@auth0/auth0-react";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -6,6 +11,7 @@ import * as z from "zod";
 import { Icons } from "@/components/icons";
 import {
   AlertDialog,
+  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -24,34 +30,46 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
-import { createCategorySchema } from "@/lib/validations/category";
 
 type Inputs = z.infer<typeof createCategorySchema>;
 
 export function CategoryCreateDialog() {
+  const auth = useAuth0();
+  const queryClient = useQueryClient();
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
-  const [isLoading, setLoading] = useState(false);
   const form = useForm<Inputs>({
     resolver: zodResolver(createCategorySchema),
     defaultValues: {
+      name: "",
       note: "",
     },
   });
 
-  async function onSubmit(data: Inputs) {
-    console.log({ data });
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+  const { mutate, isLoading } = useMutation({
+    mutationFn: createCategory,
+    onSuccess: (category) => {
+      queryClient.setQueriesData([QUERY_CATEGORIES_KEY], (prev: unknown) => {
+        const categories = prev as Category[];
+        return [category, ...categories];
+      });
+
       setOpen(false);
       toast({
         title: "Created successfully",
-        description: `category ${data.name} created successfully`,
+        description: `category ${category.name} created successfully`,
       });
-    }, 5000);
+    },
+    onError: (error) => {
+      console.log({ error });
+    },
+  });
+
+  async function onSubmit(data: Inputs) {
+    mutate({ auth, category: data });
   }
 
   return (
@@ -66,6 +84,7 @@ export function CategoryCreateDialog() {
             Create your new custom category
           </AlertDialogDescription>
         </AlertDialogHeader>
+        <Separator />
         <div>
           <Form {...form}>
             <form
@@ -80,7 +99,7 @@ export function CategoryCreateDialog() {
                   <FormItem>
                     <FormLabel>Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="name" {...field} />
+                      <Input placeholder="category name" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -89,12 +108,15 @@ export function CategoryCreateDialog() {
               <FormField
                 control={form.control}
                 name="note"
-                disabled={isLoading}
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Description</FormLabel>
                     <FormControl>
-                      <Textarea placeholder="description" {...field} />
+                      <Textarea
+                        placeholder="category description"
+                        className="resize-none"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -118,6 +140,30 @@ export function CategoryCreateDialog() {
             </form>
           </Form>
         </div>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+export function CategoryDeleteDialog() {
+  const [open, setOpen] = useState(false);
+  return (
+    <AlertDialog open={open} onOpenChange={setOpen}>
+      <AlertDialogTrigger asChild>
+        <Button variant="outline">Show Dialog</Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This action cannot be undone. This will permanently delete your
+            account and remove your data from our servers.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction>Continue</AlertDialogAction>
+        </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
   );
