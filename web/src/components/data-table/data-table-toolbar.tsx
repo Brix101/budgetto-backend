@@ -17,7 +17,7 @@ export function DataTableToolbar<TData>({
 
   return (
     <div className="flex items-center justify-between">
-      <div className="relative ml-2">
+      <div className="relative">
         <Input
           placeholder={placeHolder ? placeHolder : "Filter..."}
           value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
