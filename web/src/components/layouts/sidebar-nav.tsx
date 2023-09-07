@@ -6,9 +6,17 @@ import { Link, useLocation } from "react-router-dom";
 
 export interface SidebarNavProps extends React.HTMLAttributes<HTMLDivElement> {
   items: SidebarNavItem[];
+  isLoading?: boolean;
+  loadingColor?: string;
 }
 
-export function SidebarNav({ items, className, ...props }: SidebarNavProps) {
+export function SidebarNav({
+  items,
+  className,
+  isLoading,
+  loadingColor,
+  ...props
+}: SidebarNavProps) {
   const location = useLocation();
 
   if (!items?.length) return null;
@@ -17,6 +25,17 @@ export function SidebarNav({ items, className, ...props }: SidebarNavProps) {
     <div className={cn("flex w-full flex-col gap-2", className)} {...props}>
       {items.map((item, index) => {
         const Icon = Icons[item.icon ?? "chevronLeft"];
+
+        if (isLoading) {
+          return (
+            <span
+              className={cn(
+                "h-9 w-full border border-transparent animate-pulse rounded-md bg-muted",
+                loadingColor
+              )}
+            ></span>
+          );
+        }
 
         const isActive = item.href === location.pathname;
         return item.href ? (

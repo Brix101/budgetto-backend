@@ -10,9 +10,9 @@ type Category struct {
 	Base
 
 	// category fields
-	Name      string `json:"name" validate:"required"`
-	Note      string `json:"note,omitempty"`
-	CreatedBy *string  `json:"-"`
+	Name      string  `json:"name" validate:"required"`
+	Note      string  `json:"note,omitempty"`
+	CreatedBy *string `json:"created_by,omitempty"`
 }
 
 // CategoryRepository represents the categories repository contract

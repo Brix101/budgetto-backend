@@ -1,73 +1,176 @@
-import { Button } from "@/components/ui/button";
-import { QUERY_CATEGORIES_KEY } from "@/constant/query.constant";
-import queryClient from "@/lib/queryClient";
-import { Category } from "@/lib/validations/category";
-import { useGetCategories } from "@/services/category";
-import { useAuth0 } from "@auth0/auth0-react";
-import { useQuery } from "@tanstack/react-query";
-import { AxiosError } from "axios";
-import { Suspense } from "react";
+import { categoryColumns } from "@/components/columns/category.columns";
+import { DataTablePagination } from "@/components/columns/data-table-pagination";
+import { DataTableToolbar } from "@/components/columns/data-table-toolbar";
 import {
-  Await,
-  LoaderFunctionArgs,
-  useAsyncError,
-  useLoaderData,
-} from "react-router-dom";
-
-type HomeLoader = {
-  promiseData: Promise<Category[]>;
-};
-
-export const loader = ({ request, params }: LoaderFunctionArgs): HomeLoader => {
-  console.log({ request, params });
-  return {
-    promiseData: queryClient.fetchQuery(
-      [QUERY_CATEGORIES_KEY],
-      useGetCategories,
-      {
-        staleTime: 10000,
-      }
-    ),
-  };
-};
+  PageHeader,
+  PageHeaderDescription,
+  PageHeaderHeading,
+} from "@/components/page-header";
+import { Shell } from "@/components/shells/shell";
+import { buttonVariants } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { cn } from "@/lib/utils";
+import { useQueryCategories } from "@/services/category.service";
+import {
+  ColumnDef,
+  ColumnFiltersState,
+  SortingState,
+  VisibilityState,
+  flexRender,
+  getCoreRowModel,
+  getFacetedRowModel,
+  getFacetedUniqueValues,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
+import * as React from "react";
+import { Link } from "react-router-dom";
 
 function CategoryPage() {
-  const { logout } = useAuth0();
-  const { promiseData } = useLoaderData() as HomeLoader;
+  const { data } = useQueryCategories();
 
   return (
-    <div>
-      <Button
-        onClick={() =>
-          logout({ logoutParams: { returnTo: window.location.origin } })
-        }
+    <Shell variant="sidebar">
+      <PageHeader
+        id="dashboard-stores-page-header"
+        aria-labelledby="dashboard-stores-page-header-heading"
       >
-        Logout
-      </Button>
-      categories
-      <Suspense fallback={<div>Loading...</div>}>
-        <Await resolve={promiseData} errorElement={<ErrorBoundary />}>
-          <SomeView />
-        </Await>
-      </Suspense>
-    </div>
+        <div className="flex space-x-4">
+          <PageHeaderHeading size="sm" className="flex-1">
+            Categories
+          </PageHeaderHeading>
+          <Link
+            aria-label="Create category"
+            to={"/dashboard/categories"}
+            // href={getDashboardRedirectPath({
+            //   storeCount: allStores.length,
+            //   subscriptionPlan: subscriptionPlan,
+            // })}
+            className={cn(
+              buttonVariants({
+                size: "sm",
+              })
+            )}
+          >
+            Create category
+          </Link>
+        </div>
+        <PageHeaderDescription size="sm">
+          Manage your categories
+        </PageHeaderDescription>
+      </PageHeader>
+      <section
+        id="dashboard-stores-page-stores"
+        aria-labelledby="dashboard-stores-page-stores-heading"
+      >
+        <DataTable data={data ?? []} columns={categoryColumns} />
+      </section>
+    </Shell>
   );
 }
 
-function ErrorBoundary() {
-  const error = useAsyncError() as AxiosError;
-  console.log({ error });
-  return <div>Dang! {error.message}</div>;
+interface DataTableProps<TData, TValue> {
+  columns: ColumnDef<TData, TValue>[];
+  data: TData[];
 }
 
-function SomeView() {
-  const { data } = useQuery<Category[]>([QUERY_CATEGORIES_KEY]);
+export function DataTable<TData, TValue>({
+  columns,
+  data,
+}: DataTableProps<TData, TValue>) {
+  const [rowSelection, setRowSelection] = React.useState({});
+  const [columnVisibility, setColumnVisibility] =
+    React.useState<VisibilityState>({});
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    []
+  );
+  const [sorting, setSorting] = React.useState<SortingState>([]);
+
+  const table = useReactTable({
+    data,
+    columns,
+    state: {
+      sorting,
+      columnVisibility,
+      rowSelection,
+      columnFilters,
+    },
+    enableRowSelection: true,
+    onRowSelectionChange: setRowSelection,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onColumnVisibilityChange: setColumnVisibility,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFacetedRowModel: getFacetedRowModel(),
+    getFacetedUniqueValues: getFacetedUniqueValues(),
+  });
 
   return (
-    <div>
-      {data?.map((category) => {
-        return <div key={category.id}>{category.name}</div>;
-      })}
+    <div className="space-y-4">
+      <DataTableToolbar table={table} />
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => {
+                  return (
+                    <TableHead key={header.id}>
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                    </TableHead>
+                  );
+                })}
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {table.getRowModel().rows?.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow
+                  key={row.id}
+                  data-state={row.getIsSelected() && "selected"}
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
+                  No results.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+      <DataTablePagination table={table} />
     </div>
   );
 }

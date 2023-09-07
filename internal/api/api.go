@@ -59,7 +59,7 @@ func (a *api) Routes() *chi.Mux {
 		AllowedOrigins:   []string{"http://192.168.254.180:5173", "http://localhost:5173"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "Link"},
-		AllowCredentials: true,
+		AllowCredentials: false,
 		MaxAge:           300, // Maximum value not ignored by any of major browsers
 	}))
 
@@ -75,4 +75,3 @@ func (a *api) Routes() *chi.Mux {
 
 	return r
 }
-

@@ -1,14 +1,14 @@
-import DashboardLayout from "@/components/layouts/DashboardLayout";
-import CategoryPage, { loader as categoryLoader } from "@/pages/CategoryPage";
-import Dashboard from "@/pages/Dashboard";
+import { Toaster } from "@/components/ui/toaster";
+import AccountPage from "@/pages/AccountPage";
+import BudgetPage from "@/pages/BudgetPage";
+import CategoryPage from "@/pages/CategoryPage";
+import DashboardPage from "@/pages/DashboardPage";
 import Home from "@/pages/Home";
-import PageError from "@/pages/PageError";
 import PageNotFound from "@/pages/PageNotFound";
+import TransactionPage from "@/pages/TransactionPage";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import AccountPage from "./pages/AccountPage";
-import BudgetPage from "./pages/BudgetPage";
-import TransactionPage from "./pages/TransactionPage";
+import { DashboardShell } from "./components/shells/layout-shell";
 
 function App() {
   const router = createBrowserRouter([
@@ -18,11 +18,11 @@ function App() {
     },
     {
       path: "/dashboard",
-      element: <DashboardLayout />,
+      element: <DashboardShell />,
       children: [
         {
           index: true,
-          element: <Dashboard />,
+          element: <DashboardPage />,
         },
         {
           path: "accounts",
@@ -35,8 +35,6 @@ function App() {
         {
           path: "categories",
           element: <CategoryPage />,
-          loader: categoryLoader,
-          errorElement: <PageError />,
         },
         {
           path: "transactions",
@@ -54,6 +52,7 @@ function App() {
     <>
       <RouterProvider router={router} fallbackElement={<div>Loading...</div>} />
       <ReactQueryDevtools initialIsOpen={false} position="bottom-right" />
+      <Toaster />
     </>
   );
 }

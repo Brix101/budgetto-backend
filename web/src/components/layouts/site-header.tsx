@@ -1,4 +1,5 @@
 import { Icons } from "@/components/icons";
+import { MainNav } from "@/components/layouts/main-nav";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
@@ -11,25 +12,24 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useAuth0 } from "@auth0/auth0-react";
+import { Auth0ContextInterface, User } from "@auth0/auth0-react";
 import { Link } from "react-router-dom";
 
-export function SiteHeader() {
-  const { user, logout } = useAuth0();
+interface SiteHeaderProps {
+  auth: Auth0ContextInterface<User>;
+}
+
+export function SiteHeader({ auth }: SiteHeaderProps) {
+  const { user, logout, loginWithRedirect } = auth;
 
   const initials = `${user?.firstName?.charAt(0) ?? ""} ${
     user?.lastName?.charAt(0) ?? ""
   }`;
 
-  console.log({ user });
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background">
       <div className="container flex h-16 items-center">
-        {/* <MainNav items={siteConfig.mainNav} />
-        <MobileNav
-          mainNavItems={siteConfig.mainNav}
-          sidebarNavItems={dashboardConfig.sidebarNav}
-        /> */}
+        <MainNav />
         <div className="flex flex-1 items-center justify-end space-x-4">
           <nav className="flex items-center space-x-2">
             {user ? (
@@ -52,7 +52,7 @@ export function SiteHeader() {
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
                       <p className="text-sm font-medium leading-none">
-                        {user.name}
+                        {user.name === user.email ? user.nickname : user.name}
                       </p>
                       <p className="text-xs leading-none text-muted-foreground">
                         {user.email}
@@ -61,24 +61,24 @@ export function SiteHeader() {
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuGroup>
-                    <DropdownMenuItem asChild>
-                      <Link to="/dashboard/account">
+                    <DropdownMenuItem asChild disabled>
+                      <Link to="/dashboard/profile">
                         <Icons.user
                           className="mr-2 h-4 w-4"
                           aria-hidden="true"
                         />
-                        Account
-                        <DropdownMenuShortcut>⇧⌘A</DropdownMenuShortcut>
+                        Profile
+                        <DropdownMenuShortcut></DropdownMenuShortcut>
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link to="/dashboard/stores">
+                      <Link to="/dashboard">
                         <Icons.terminal
                           className="mr-2 h-4 w-4"
                           aria-hidden="true"
                         />
                         Dashboard
-                        <DropdownMenuShortcut>⌘D</DropdownMenuShortcut>
+                        <DropdownMenuShortcut></DropdownMenuShortcut>
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild disabled>
@@ -88,16 +88,14 @@ export function SiteHeader() {
                           aria-hidden="true"
                         />
                         Settings
-                        <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
+                        <DropdownMenuShortcut></DropdownMenuShortcut>
                       </Link>
                     </DropdownMenuItem>
                   </DropdownMenuGroup>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Button
-                      variant="ghost"
+                    <a
                       className="w-full outline-none"
-                      size="sm"
                       onClick={() =>
                         logout({
                           logoutParams: { returnTo: window.location.origin },
@@ -109,8 +107,8 @@ export function SiteHeader() {
                         aria-hidden="true"
                       />
                       Log out
-                      <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
-                    </Button>
+                      <DropdownMenuShortcut></DropdownMenuShortcut>
+                    </a>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -119,6 +117,7 @@ export function SiteHeader() {
                 className={buttonVariants({
                   size: "sm",
                 })}
+                onClick={() => loginWithRedirect()}
               >
                 Sign In
                 <span className="sr-only">Sign In</span>
