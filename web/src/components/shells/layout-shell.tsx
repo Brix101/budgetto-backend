@@ -1,13 +1,14 @@
+import { Outlet } from "react-router-dom";
+
+import { MainNav } from "@/components/layouts/main-nav";
 import { SidebarNav } from "@/components/layouts/sidebar-nav";
 import { SiteHeader } from "@/components/layouts/site-header";
+import { PageHeader } from "@/components/page-header";
+import { Shell } from "@/components/shells/shell";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
 import { dashboardConfig } from "@/config/siteconfig";
 import { useAuth0 } from "@auth0/auth0-react";
-import { Outlet } from "react-router-dom";
-import { MainNav } from "../layouts/main-nav";
-import { PageHeader } from "../page-header";
-import { Skeleton } from "../ui/skeleton";
-import { Shell } from "./shell";
 
 export function DashboardShell() {
   const auth = useAuth0();

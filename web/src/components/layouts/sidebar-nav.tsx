@@ -1,8 +1,9 @@
 import type { SidebarNavItem } from "@/types";
 
-import { Icons } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import { Link, useLocation } from "react-router-dom";
+
+import { Icons } from "@/components/icons";
 
 export interface SidebarNavProps extends React.HTMLAttributes<HTMLDivElement> {
   items: SidebarNavItem[];
@@ -29,6 +30,7 @@ export function SidebarNav({
         if (isLoading) {
           return (
             <span
+              key={index}
               className={cn(
                 "h-9 w-full border border-transparent animate-pulse rounded-md bg-muted",
                 loadingColor

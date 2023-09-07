@@ -51,7 +51,7 @@ function App() {
   return (
     <>
       <RouterProvider router={router} fallbackElement={<div>Loading...</div>} />
-      <ReactQueryDevtools initialIsOpen={false} position="bottom-right" />
+      <ReactQueryDevtools initialIsOpen={false} />
       <Toaster />
     </>
   );

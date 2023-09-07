@@ -1,5 +1,7 @@
 import {
+  ArrowDown,
   ArrowRightLeft,
+  ArrowUp,
   BadgeDollarSign,
   ChevronLeft,
   ChevronRight,
@@ -12,6 +14,8 @@ import {
   FileTerminal,
   LogOut,
   Moon,
+  MoreHorizontal,
+  MoreVertical,
   MoveLeft,
   Settings,
   ShoppingBag,
@@ -23,6 +27,8 @@ import {
 type IconProps = React.HTMLAttributes<SVGElement>;
 
 export const Icons = {
+  arrowUp: ArrowUp,
+  arrowDown: ArrowDown,
   close: X,
   view: Eye,
   hide: EyeOff,
@@ -42,6 +48,8 @@ export const Icons = {
   chevronRight: ChevronRight,
   moon: Moon,
   sun: Sun,
+  verticalThreeDots: MoreVertical,
+  horizontalThreeDots: MoreHorizontal,
   category: (props: IconProps) => (
     <svg
       width="24"

@@ -1,7 +1,8 @@
+import { Table } from "@tanstack/react-table";
+
 import { Icons } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Table } from "@tanstack/react-table";
 
 interface DataTableToolbarProps<TData> {
   table: Table<TData>;
@@ -14,21 +15,20 @@ export function DataTableToolbar<TData>({
 
   return (
     <div className="flex items-center justify-between">
-      <div className="flex flex-1 items-center space-x-2 ml-2">
+      <div className="relative ml-2">
         <Input
           placeholder="Filter categories..."
           value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
             table.getColumn("name")?.setFilterValue(event.target.value)
           }
-          className="w-[150px] lg:w-[250px]"
-          type="search"
+          className="w-40 lg:w-80"
         />
         {isFiltered && (
           <Button
             variant="ghost"
             onClick={() => table.resetColumnFilters()}
-            className="px-2 lg:px-3"
+            className="absolute right-0 top-0 h-full px-3 py-1 hover:bg-transparent"
           >
             <Icons.close className="h-4 w-4" />
           </Button>

@@ -1,3 +1,6 @@
+import { Auth0ContextInterface, User } from "@auth0/auth0-react";
+import { Link } from "react-router-dom";
+
 import { Icons } from "@/components/icons";
 import { MainNav } from "@/components/layouts/main-nav";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -12,9 +15,7 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Auth0ContextInterface, User } from "@auth0/auth0-react";
-import { Link } from "react-router-dom";
-import { Skeleton } from "../ui/skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface SiteHeaderProps {
   auth: Auth0ContextInterface<User>;

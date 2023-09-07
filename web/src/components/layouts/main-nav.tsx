@@ -1,5 +1,6 @@
-import { Icons } from "@/components/icons";
 import { Link } from "react-router-dom";
+
+import { Icons } from "@/components/icons";
 
 export function MainNav() {
   return (
