@@ -75,7 +75,7 @@ export function CategoryCreateDialog() {
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger asChild>
-        <Button>Create category</Button>
+        <Button size="sm">Create category</Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>

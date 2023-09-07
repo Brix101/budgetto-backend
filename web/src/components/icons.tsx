@@ -17,6 +17,7 @@ import {
   MoreHorizontal,
   MoreVertical,
   MoveLeft,
+  Search,
   Settings,
   ShoppingBag,
   Sun,
@@ -50,6 +51,7 @@ export const Icons = {
   sun: Sun,
   verticalThreeDots: MoreVertical,
   horizontalThreeDots: MoreHorizontal,
+  search: Search,
   category: (props: IconProps) => (
     <svg
       width="24"
