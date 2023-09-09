@@ -2,8 +2,6 @@ package util
 
 import (
 	"context"
-	"fmt"
-	"os"
 
 	"github.com/Brix101/budgetto-backend/internal/repository"
 	"go.opentelemetry.io/otel"
