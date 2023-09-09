@@ -28,11 +28,17 @@ func main() {
 	logger := util.NewLogger("api")
 	defer func() { _ = logger.Sync() }()
 
-	db, err := util.NewDatabasePool(ctx, env.DATABASE_URL, 16)
+	db, err := util.NewDatabasePool(ctx, 16)
 	if err != nil {
-		log.Fatal("failed to connect to database:", err)
+		log.Fatal("failed to connect to database: ", err)
 	}
 	defer db.Close()
+
+	redis, err := util.NewRedisQueueClient(ctx, 16)
+	if err != nil {
+		log.Fatal("failed to connect to redis: ", err)
+	}
+	defer redis.Close()
 
 	api := api.NewAPI(ctx, logger, db)
 	server := api.Server(env.PORT)
