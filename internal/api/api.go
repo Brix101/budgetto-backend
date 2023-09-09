@@ -10,6 +10,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/redis/go-redis/v9"
+
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
 )
@@ -24,7 +26,7 @@ type api struct {
 	transactionRepo domain.TransactionRepository
 }
 
-func NewAPI(_ context.Context, logger *zap.Logger, pool *pgxpool.Pool) *api {
+func NewAPI(_ context.Context, logger *zap.Logger, _ *redis.Client, pool *pgxpool.Pool) *api {
 	categoryRepo := repository.NewPostgresCategory(pool)
 	accountRepo := repository.NewPostgresAccount(pool)
 	budgetRepo := repository.NewPostgresBudget(pool)
@@ -43,9 +45,9 @@ func NewAPI(_ context.Context, logger *zap.Logger, pool *pgxpool.Pool) *api {
 	}
 }
 
-func (a *api) Server(port string) *http.Server {
+func (a *api) Server(port int) *http.Server {
 	return &http.Server{
-		Addr:    fmt.Sprintf(":%s", port),
+		Addr:    fmt.Sprintf(":%d", port),
 		Handler: a.Routes(),
 	}
 }

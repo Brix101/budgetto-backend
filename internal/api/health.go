@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 
-	"github.com/Brix101/budgetto-backend/config"
 	"github.com/Brix101/budgetto-backend/internal/middlewares"
 	"github.com/go-chi/chi/v5"
 )
@@ -27,10 +27,9 @@ func (a api) ProtectedRoutes() chi.Router {
 }
 
 func (hr api) healthCheckHandler(w http.ResponseWriter, r *http.Request) {
-	env := config.GetConfig()
 	data := map[string]string{
 		"status": "available",
-		"port":   env.PORT,
+		"port":   os.Getenv("PORT"),
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -39,14 +38,12 @@ func (hr api) healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a api) protectedCheckHandler(w http.ResponseWriter, r *http.Request) {
-	env := config.GetConfig()
 	data := map[string]string{
 		"status": "available",
-		"port":   env.PORT,
+		"port":   os.Getenv("PORT"),
 	}
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
-
 
 	claims, err := a.authClaims(ctx)
 	if err != nil {
