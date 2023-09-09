@@ -17,7 +17,7 @@ import { useQueryCategories } from "@/services/category.service";
 
 function CategoryPage() {
   const { setMode } = useBoundStore((state) => state.category);
-  const { data } = useQueryCategories();
+  const { data, isLoading } = useQueryCategories();
 
   function handleCreateClick() {
     setMode({ mode: "create" });
@@ -49,6 +49,7 @@ function CategoryPage() {
           data={data ?? []}
           columns={categoryColumns}
           searchPlaceHolder="Filter categories..."
+          isLoading={isLoading}
         />
 
         <CategoryCreateDialog />

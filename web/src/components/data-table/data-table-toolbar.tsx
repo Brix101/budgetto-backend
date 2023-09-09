@@ -7,11 +7,13 @@ import { Input } from "@/components/ui/input";
 interface DataTableToolbarProps<TData> {
   table: Table<TData>;
   placeHolder?: string;
+  disabled?: boolean;
 }
 
 export function DataTableToolbar<TData>({
   table,
   placeHolder,
+  disabled,
 }: DataTableToolbarProps<TData>) {
   const isFiltered = table.getState().columnFilters.length > 0;
 
@@ -26,6 +28,7 @@ export function DataTableToolbar<TData>({
             table.getColumn("name")?.setFilterValue(event.target.value)
           }
           className="w-40 lg:w-80 px-10"
+          disabled={disabled}
         />
         {isFiltered && (
           <Button
