@@ -30,15 +30,19 @@ func main() {
 
 	db, err := util.NewDatabasePool(ctx, 16)
 	if err != nil {
-		log.Fatal("failed to connect to database: ", err)
+		log.Fatal("Database connection failed: ", err)
 	}
 	defer db.Close()
 
 	redis, err := util.NewRedisQueueClient(ctx, 16)
 	if err != nil {
-		log.Fatal("failed to connect to redis: ", err)
+		log.Fatal("Redis connection failed: ", err)
 	}
 	defer redis.Close()
+
+	if err := util.NewSeeder(ctx, logger, db).CategorySeed(); err != nil {
+		log.Fatal("Seeding failed: ", err)
+	}
 
 	api := api.NewAPI(ctx, logger, db)
 	server := api.Server(env.PORT)

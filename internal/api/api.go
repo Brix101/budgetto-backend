@@ -24,15 +24,13 @@ type api struct {
 	transactionRepo domain.TransactionRepository
 }
 
-func NewAPI(ctx context.Context, logger *zap.Logger, pool *pgxpool.Pool) *api {
+func NewAPI(_ context.Context, logger *zap.Logger, pool *pgxpool.Pool) *api {
 	categoryRepo := repository.NewPostgresCategory(pool)
 	accountRepo := repository.NewPostgresAccount(pool)
 	budgetRepo := repository.NewPostgresBudget(pool)
 	transctionRepo := repository.NewPostgresTransaction(pool)
 
 	client := &http.Client{}
-
-	categoryRepo.Seed(ctx, logger)
 
 	return &api{
 		logger:     logger,
