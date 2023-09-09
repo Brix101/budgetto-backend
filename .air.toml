@@ -12,7 +12,7 @@ tmp_dir = "tmp"
   exclude_regex = ["_test.go"]
   exclude_unchanged = false
   follow_symlink = false
-  full_bin = "ENV=development ./tmp/main api"
+  full_bin = "ENV=development PORT=5000 ./tmp/main api"
   include_dir = ["cmd", "internal", "pkg"]
   include_ext = ["go", "tpl", "tmpl", "html"]
   include_file = []

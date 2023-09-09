@@ -69,7 +69,6 @@ func (a *api) Routes() *chi.Mux {
 		r.Mount("/accounts", a.AccountRoutes())
 		r.Mount("/budgets", a.BudgetRoutes())
 		r.Mount("/transactions", a.TransactionRoutes())
-		r.Mount("/protected", a.ProtectedRoutes())
 	})
 
 	return r

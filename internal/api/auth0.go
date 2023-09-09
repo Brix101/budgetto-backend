@@ -85,13 +85,15 @@ func (a api) auth0Middleware(next http.Handler) http.Handler {
 			return
 		}
 
-		errorHandler := func(w http.ResponseWriter, _ *http.Request, err error) {
-			a.logger.Info("Invalid JWT", zap.Error(err))
+		errorHandler := func(w http.ResponseWriter, r *http.Request, _ error) {
+			// a.logger.Info("Invalid JWT", zap.Error(err))
 
-			w.Header().Set("Content-Type", "application/json")
-			w.Header().Set("X-Budgetto-Error", err.Error())
-			w.WriteHeader(http.StatusUnauthorized)
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			// w.Header().Set("Content-Type", "application/json")
+			// w.Header().Set("X-Budgetto-Error", err.Error())
+			// w.WriteHeader(http.StatusUnauthorized)
+			// http.Error(w, "Unauthorized", http.StatusUnauthorized)
+
+			next.ServeHTTP(w, r)
 		}
 
 		middleware := jwtmiddleware.New(

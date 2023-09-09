@@ -7,7 +7,6 @@ import (
 	"strconv"
 
 	"github.com/Brix101/budgetto-backend/internal/domain"
-	"github.com/Brix101/budgetto-backend/internal/middlewares"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator"
 	"go.uber.org/zap"
@@ -16,7 +15,7 @@ import (
 func (a api) AccountRoutes() chi.Router {
 	r := chi.NewRouter()
 
-	r.Use(middlewares.Auth0Middleware)
+	r.Use(a.auth0Middleware)
 
 	r.Get("/", a.accountListHandler)
 	r.Post("/", a.accountCreateHandler)
@@ -37,12 +36,12 @@ func (a api) accountListHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	user,err := a.authClaims(ctx)
+	user, err := a.authClaims(ctx)
 	if err != nil {
 		a.errorResponse(w, r, 403, err)
 		return
 	}
-	
+
 	accs, err := a.accountRepo.GetByUserSUB(ctx, user.Sub)
 	if err != nil {
 		a.logger.Error("failed to fetch accounts from database", zap.Error(err))
@@ -65,7 +64,7 @@ func (a api) accountGetHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	user,err := a.authClaims(ctx)
+	user, err := a.authClaims(ctx)
 	if err != nil {
 		a.errorResponse(w, r, 403, err)
 		return
@@ -107,7 +106,7 @@ func (a api) accountCreateHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	user,err := a.authClaims(ctx)
+	user, err := a.authClaims(ctx)
 	if err != nil {
 		a.errorResponse(w, r, 403, err)
 		return
@@ -155,7 +154,7 @@ func (a api) accountUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	user,err := a.authClaims(ctx)
+	user, err := a.authClaims(ctx)
 	if err != nil {
 		a.errorResponse(w, r, 403, err)
 		return
@@ -208,7 +207,7 @@ func (a api) accountUpdateHandler(w http.ResponseWriter, r *http.Request) {
 func (a api) accountDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
-	user,err := a.authClaims(ctx)
+	user, err := a.authClaims(ctx)
 	if err != nil {
 		a.errorResponse(w, r, 403, err)
 		return

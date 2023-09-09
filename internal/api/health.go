@@ -7,21 +7,15 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/Brix101/budgetto-backend/internal/middlewares"
 	"github.com/go-chi/chi/v5"
 )
 
-func (hr api) HealthRoutes() chi.Router {
+func (a api) HealthRoutes() chi.Router {
 	r := chi.NewRouter()
+	r.Use(a.auth0Middleware)
 
-	r.Get("/", hr.healthCheckHandler)
-	return r
-}
-
-func (a api) ProtectedRoutes() chi.Router {
-	r := chi.NewRouter()
-	r.Use(middlewares.Auth0Middleware)
-	r.Get("/", a.protectedCheckHandler)
+	r.Get("/", a.healthCheckHandler)
+	r.Get("/protected", a.protectedCheckHandler)
 
 	return r
 }
