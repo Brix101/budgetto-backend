@@ -7,7 +7,6 @@ import (
 	"strconv"
 
 	"github.com/Brix101/budgetto-backend/internal/domain"
-	"github.com/Brix101/budgetto-backend/internal/middlewares"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator"
 	"go.uber.org/zap"
@@ -16,7 +15,7 @@ import (
 func (a api) TransactionRoutes() chi.Router {
 	r := chi.NewRouter()
 
-	r.Use(middlewares.Auth0Middleware)
+	r.Use(a.auth0Middleware)
 
 	r.Get("/", a.transactionListHandler)
 	r.Post("/", a.transactionCreateHandler)
@@ -62,7 +61,7 @@ func (a api) transactionListHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	user,err := a.authClaims(ctx)
+	user, err := a.authClaims(ctx)
 	if err != nil {
 		a.errorResponse(w, r, 403, err)
 		return
@@ -90,7 +89,7 @@ func (a api) transactionGetHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	user,err := a.authClaims(ctx)
+	user, err := a.authClaims(ctx)
 	if err != nil {
 		a.errorResponse(w, r, 403, err)
 		return
@@ -135,7 +134,7 @@ func (a api) transactionCreateHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	user,err := a.authClaims(ctx)
+	user, err := a.authClaims(ctx)
 	if err != nil {
 		a.errorResponse(w, r, 403, err)
 		return
@@ -190,7 +189,7 @@ func (a api) transactionUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	user,err := a.authClaims(ctx)
+	user, err := a.authClaims(ctx)
 	if err != nil {
 		a.errorResponse(w, r, 403, err)
 		return
@@ -252,7 +251,7 @@ func (a api) transactionDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	user,err := a.authClaims(ctx)
+	user, err := a.authClaims(ctx)
 	if err != nil {
 		a.errorResponse(w, r, 403, err)
 		return

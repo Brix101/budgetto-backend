@@ -71,11 +71,12 @@ func Auth0Middleware(next http.Handler) http.Handler {
 		}
 
 		errorHandler := func(w http.ResponseWriter, _ *http.Request, err error) {
-			log.Printf("Encountered error while validating JWT: %v", err)
+			// log.Printf("Encountered error while validating JWT: %v", err)
 
 			w.Header().Set("Content-Type", "application/json")
+			w.Header().Set("X-Budgetto-Error", err.Error())
 			w.WriteHeader(http.StatusUnauthorized)
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			http.Error(w, err.Error(), http.StatusUnauthorized)
 		}
 
 		middleware := jwtmiddleware.New(
