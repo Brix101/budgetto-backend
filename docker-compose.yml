@@ -36,6 +36,7 @@ services:
   #   env_file: .env
   #   depends_on:
   #     - database
+  #     - cache
   #   networks:
   #     - default
   #   ports:
@@ -44,6 +45,7 @@ services:
   #     - PORT=4000
   #     - ENV=production
   #     - DATABASE_URL=postgres://postgres:postgres@database:5432/db?sslmode=disable
+  #     - REDIS_URL=redis://cache:6379
 
   # server-2:
   #   build:
@@ -52,6 +54,7 @@ services:
   #   env_file: .env
   #   depends_on:
   #     - database
+  #     - cache
   #   networks:
   #     - default
   #   ports:
@@ -60,6 +63,7 @@ services:
   #     - PORT=5000
   #     - ENV=production
   #     - DATABASE_URL=postgres://postgres:postgres@database:5432/db?sslmode=disable
+  #     - REDIS_URL=redis://cache:6379
 
   # caddy:
   #   image: caddy/caddy:2.7.3-alpine

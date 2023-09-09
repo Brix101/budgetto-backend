@@ -24,4 +24,4 @@ ENV GO_ENV=prod
 COPY --from=builder /main .
 
 # Run
-CMD ["./main"]
+CMD ["./main","api"]
