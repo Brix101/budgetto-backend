@@ -73,7 +73,7 @@ func Execute(ctx context.Context) int {
 	rootCmd.PersistentFlags().BoolVarP(&profile, "profile", "p", false, "record CPU pprof")
 
 	rootCmd.AddCommand(APICmd(ctx))
-	// rootCmd.AddCommand(SchedulerCmd(ctx))
+	rootCmd.AddCommand(SchedulerCmd(ctx))
 	// rootCmd.AddCommand(WorkerCmd(ctx))
 
 	go func() {

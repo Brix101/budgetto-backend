@@ -1,4 +1,0 @@
-package scheduler
-
-func NewCron() {
-}
