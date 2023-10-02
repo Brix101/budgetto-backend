@@ -13,6 +13,8 @@ import (
 	"github.com/redis/go-redis/v9"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	_ "github.com/swaggo/http-swagger/example/go-chi/docs"
+	"github.com/swaggo/http-swagger/v2"
 	"go.uber.org/zap"
 )
 
@@ -52,8 +54,24 @@ func (a *api) Server(port int) *http.Server {
 	}
 }
 
+// @title Swagger Example API
+// @version 1.0
+// @description This is a sample server Petstore server.
+// @termsOfService http://swagger.io/terms/
+
+// @contact.name API Support
+// @contact.url http://www.swagger.io/support
+// @contact.email support@swagger.io
+
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host petstore.swagger.io
+// @BasePath /v1
+
 func (a *api) Routes() *chi.Mux {
 	r := chi.NewRouter()
+
 	r.Use(middleware.Logger)
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"http://192.168.254.180:5173", "http://localhost:5173"},
@@ -62,6 +80,10 @@ func (a *api) Routes() *chi.Mux {
 		AllowCredentials: false,
 		MaxAge:           300, // Maximum value not ignored by any of major browsers
 	}))
+
+	r.Get("/swagger/*", httpSwagger.Handler(
+		httpSwagger.URL("http://localhost:1323/swagger/doc.json"), // The url pointing to API definition
+	))
 
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Mount("/health", a.HealthRoutes())
