@@ -3,7 +3,6 @@ package util
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"time"
 
@@ -39,21 +38,20 @@ func NewDatabasePool(ctx context.Context, maxConns int) (*pgxpool.Pool, error) {
 	}
 
 	url := fmt.Sprintf(
-		"%s&pool_max_conns=%d&pool_min_conns=%d",
-		os.Getenv("DATABASE_URL"),
+		"%s?pool_max_conns=%d&pool_min_conns=%d",
+		os.Getenv("DATABASE_CONNECTION_POOL_URL"),
 		maxConns,
 		2,
 	)
 	config, err := pgxpool.ParseConfig(url)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	// Setting the build statement cache to nil helps this work with pgbouncer
 	config.ConnConfig.DefaultQueryExecMode = pgx.QueryExecModeSimpleProtocol
 	config.MaxConnLifetime = 1 * time.Hour
 	config.MaxConnIdleTime = 30 * time.Second
-
 	return pgxpool.NewWithConfig(ctx, config)
 }
 
