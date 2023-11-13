@@ -5,16 +5,17 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/Brix101/budgetto-backend/internal/domain"
-	"github.com/Brix101/budgetto-backend/internal/repository"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/redis/go-redis/v9"
 
+	"github.com/Brix101/budgetto-backend/internal/domain"
+	"github.com/Brix101/budgetto-backend/internal/repository"
+
 	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/swaggo/http-swagger/example/go-chi/docs"
-	"github.com/swaggo/http-swagger/v2"
+	httpSwagger "github.com/swaggo/http-swagger/v2"
 	"go.uber.org/zap"
 )
 
@@ -26,6 +27,7 @@ type api struct {
 	accountRepo     domain.AccountRepository
 	budgetRepo      domain.BudgetRepository
 	transactionRepo domain.TransactionRepository
+	userRepo        domain.UserRepository
 }
 
 func NewAPI(_ context.Context, logger *zap.Logger, _ *redis.Client, pool *pgxpool.Pool) *api {
@@ -33,6 +35,7 @@ func NewAPI(_ context.Context, logger *zap.Logger, _ *redis.Client, pool *pgxpoo
 	accountRepo := repository.NewPostgresAccount(pool)
 	budgetRepo := repository.NewPostgresBudget(pool)
 	transctionRepo := repository.NewPostgresTransaction(pool)
+	userRepo := repository.NewPostgresUser(pool)
 
 	client := &http.Client{}
 
@@ -44,6 +47,7 @@ func NewAPI(_ context.Context, logger *zap.Logger, _ *redis.Client, pool *pgxpoo
 		accountRepo:     accountRepo,
 		budgetRepo:      budgetRepo,
 		transactionRepo: transctionRepo,
+		userRepo:        userRepo,
 	}
 }
 
@@ -72,7 +76,11 @@ func (a *api) Server(port int) *http.Server {
 func (a *api) Routes() *chi.Mux {
 	r := chi.NewRouter()
 
+	r.Use(middleware.RequestID)
+	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
+
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"http://192.168.254.180:5173", "http://localhost:5173"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
@@ -91,6 +99,8 @@ func (a *api) Routes() *chi.Mux {
 		r.Mount("/accounts", a.AccountRoutes())
 		r.Mount("/budgets", a.BudgetRoutes())
 		r.Mount("/transactions", a.TransactionRoutes())
+		r.Mount("/auth", a.AuthRoutes())
+		r.Mount("/users", a.UserRoutes())
 	})
 
 	return r

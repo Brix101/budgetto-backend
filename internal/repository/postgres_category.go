@@ -3,10 +3,11 @@ package repository
 import (
 	"context"
 
-	"github.com/Brix101/budgetto-backend/internal/domain"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
+
+	"github.com/Brix101/budgetto-backend/internal/domain"
 )
 
 type postgresCategoryRepository struct {
@@ -78,7 +79,7 @@ func (p *postgresCategoryRepository) GetByID(ctx context.Context, id int64) (dom
 	return cat[0], nil
 }
 
-func (p *postgresCategoryRepository) GetByUserSUB(ctx context.Context, sub string) ([]domain.Category, error) {
+func (p *postgresCategoryRepository) GetByUserSUB(ctx context.Context, sub int64) ([]domain.Category, error) {
 	query := `
 		SELECT
 			id,

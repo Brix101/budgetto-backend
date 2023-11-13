@@ -12,7 +12,6 @@ import (
 
 func (a api) HealthRoutes() chi.Router {
 	r := chi.NewRouter()
-	r.Use(a.auth0Middleware)
 
 	r.Get("/", a.healthCheckHandler)
 	r.Get("/protected", a.protectedCheckHandler)
