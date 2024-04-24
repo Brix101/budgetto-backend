@@ -12,13 +12,11 @@ import (
 
 type User struct {
 	Base
-
-	// user fields
+	Bio      *string `json:"bio,omitempty"`
+	Image    *string `json:"image,omitempty"`
 	Name     string  `json:"name"`
 	Email    string  `json:"email"`
 	Password string  `json:"-"`
-	Bio      *string `json:"bio,omitempty"`
-	Image    *string `json:"image,omitempty"`
 }
 
 func (u *User) NormalizedName() string {
@@ -40,10 +38,10 @@ func (u User) CheckPassword(password string) bool {
 }
 
 type UserClaims struct {
-	Sub   int    `json:"sub"`
+	jwt.RegisteredClaims
 	Name  string `json:"name"`
 	Email string `json:"email"`
-	jwt.RegisteredClaims
+	Sub   int    `json:"sub"`
 }
 
 type userToken struct {
@@ -53,12 +51,12 @@ type userToken struct {
 func (u User) GenerateClaims() (string, error) {
 	tokenSecret := os.Getenv("TOKEN_SECRET")
 	claims := UserClaims{
-		int(u.ID),
-		u.Name,
-		u.Email,
 		jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 72)),
 		},
+		int(u.ID),
+		u.Name,
+		u.Email,
 	}
 
 	// Create token with claims

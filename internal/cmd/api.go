@@ -5,10 +5,11 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/Brix101/budgetto-backend/internal/api"
-	"github.com/Brix101/budgetto-backend/internal/util"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
+
+	"github.com/Brix101/budgetto-backend/internal/api"
+	"github.com/Brix101/budgetto-backend/internal/util"
 )
 
 func APICmd(ctx context.Context) *cobra.Command {
@@ -26,12 +27,6 @@ func APICmd(ctx context.Context) *cobra.Command {
 
 			logger := util.NewLogger("api")
 			defer func() { _ = logger.Sync() }()
-
-			// statsd, err := util.NewStatsdClient()
-			// if err != nil {
-			// 	return err
-			// }
-			// defer statsd.Close()
 
 			db, err := util.NewDatabasePool(ctx, 16)
 			if err != nil {

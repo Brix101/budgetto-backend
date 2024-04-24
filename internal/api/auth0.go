@@ -8,11 +8,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Brix101/budgetto-backend/internal/domain"
 	jwtmiddleware "github.com/auth0/go-jwt-middleware/v2"
 	"github.com/auth0/go-jwt-middleware/v2/jwks"
 	"github.com/auth0/go-jwt-middleware/v2/validator"
 	"go.uber.org/zap"
+
+	"github.com/Brix101/budgetto-backend/internal/domain"
 )
 
 // CustomClaims contains custom data we want from the token.

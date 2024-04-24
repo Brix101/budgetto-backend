@@ -6,10 +6,11 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/Brix101/budgetto-backend/internal/domain"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator"
 	"go.uber.org/zap"
+
+	"github.com/Brix101/budgetto-backend/internal/domain"
 )
 
 func (a api) AccountRoutes() chi.Router {

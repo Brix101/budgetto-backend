@@ -3,12 +3,13 @@ package util
 import (
 	"context"
 
-	"github.com/Brix101/budgetto-backend/internal/repository"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/codes"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
+
+	"github.com/Brix101/budgetto-backend/internal/repository"
 )
 
 func spanWithQuery(ctx context.Context, tracer trace.Tracer, query string) (context.Context, trace.Span) {

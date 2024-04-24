@@ -6,11 +6,9 @@ import (
 
 type Category struct {
 	Base
-
-	// category fields
+	CreatedBy *uint  `json:"created_by,omitempty"`
 	Name      string `json:"name" validate:"required"`
 	Note      string `json:"note,omitempty"`
-	CreatedBy *uint  `json:"created_by,omitempty"`
 }
 
 // CategoryRepository represents the categories repository contract

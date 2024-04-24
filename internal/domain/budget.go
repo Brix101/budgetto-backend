@@ -4,13 +4,10 @@ import "context"
 
 type Budget struct {
 	Base
-
-	// budget fields
-	Amount     float64 `json:"amount"`
-	CategoryID uint    `json:"-"`
-	CreatedBy  string  `json:"created_by"`
-
-	Category Category `json:"category,omitempty"`
+	Category   Category `json:"category,omitempty"`
+	CreatedBy  string   `json:"created_by"`
+	Amount     float64  `json:"amount"`
+	CategoryID uint     `json:"-"`
 }
 
 // BudgetRepository represents the budget's repository contract

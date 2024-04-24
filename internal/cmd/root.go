@@ -8,30 +8,12 @@ import (
 	"runtime"
 	"runtime/pprof"
 
-	// "github.com/bugsnag/bugsnag-go/v2"
-	// _ "github.com/heroku/x/hmetrics/onload"
 	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
-	// _ "github.com/honeycombio/honeycomb-opentelemetry-go"
-	// "github.com/honeycombio/opentelemetry-go-contrib/launcher"
 )
 
 func Execute(ctx context.Context) int {
 	_ = godotenv.Load()
-
-	// if key, ok := os.LookupEnv("BUGSNAG_API_KEY"); ok {
-	// 	bugsnag.Configure(bugsnag.Configuration{
-	// 		APIKey:          key,
-	// 		ReleaseStage:    os.Getenv("ENV"),
-	// 		ProjectPackages: []string{"main", "github.com/christianselig/apollo-backend"},
-	// 		AppVersion:      os.Getenv("RENDER_GIT_COMMIT"),
-	// 	})
-	// }
-
-	// otelShutdown, err := launcher.ConfigureOpenTelemetry()
-	// if err == nil {
-	// 	defer otelShutdown()
-	// }
 
 	profile := false
 
@@ -74,7 +56,6 @@ func Execute(ctx context.Context) int {
 
 	rootCmd.AddCommand(APICmd(ctx))
 	rootCmd.AddCommand(SchedulerCmd(ctx))
-	// rootCmd.AddCommand(WorkerCmd(ctx))
 
 	go func() {
 		_ = http.ListenAndServe("localhost:6060", nil)

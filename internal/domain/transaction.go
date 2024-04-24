@@ -6,17 +6,14 @@ import (
 
 type Transaction struct {
 	Base
-
-	// transaction fields
-	Amount     float64 `json:"amount"`
-	Note       string  `json:"note,omitempty"`
-	Operation  string  `json:"operation"`
-	AccountID  uint    `json:"-"`
-	CategoryID uint    `json:"-"`
-	CreatedBy  string  `json:"created_by"`
-
-	Account  Account  `json:"account,omitempty"`
-	Category Category `json:"category,omitempty"`
+	Category   Category `json:"category,omitempty"`
+	Note       string   `json:"note,omitempty"`
+	Operation  string   `json:"operation"`
+	CreatedBy  string   `json:"created_by"`
+	Account    Account  `json:"account,omitempty"`
+	Amount     float64  `json:"amount"`
+	AccountID  uint     `json:"-"`
+	CategoryID uint     `json:"-"`
 }
 
 // TransactionRepository represents the transactions repository contract

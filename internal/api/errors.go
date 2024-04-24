@@ -6,9 +6,10 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/Brix101/budgetto-backend/internal/domain"
 	"github.com/go-playground/validator"
 	"github.com/jackc/pgx/v5/pgconn"
+
+	"github.com/Brix101/budgetto-backend/internal/domain"
 )
 
 func (a *api) errorResponse(w http.ResponseWriter, _ *http.Request, status int, err error) {

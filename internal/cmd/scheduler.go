@@ -8,10 +8,11 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/Brix101/budgetto-backend/internal/util"
 	"github.com/go-co-op/gocron"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
+
+	"github.com/Brix101/budgetto-backend/internal/util"
 )
 
 func SchedulerCmd(ctx context.Context) *cobra.Command {
