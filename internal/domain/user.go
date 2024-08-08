@@ -54,9 +54,9 @@ func (u User) GenerateClaims() (string, error) {
 		jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 72)),
 		},
-		int(u.ID),
 		u.Name,
 		u.Email,
+		int(u.ID),
 	}
 
 	// Create token with claims

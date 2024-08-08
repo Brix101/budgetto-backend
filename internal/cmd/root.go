@@ -2,11 +2,13 @@ package cmd
 
 import (
 	"context"
+	"log"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
 	"runtime"
 	"runtime/pprof"
+	"time"
 
 	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
@@ -57,7 +59,7 @@ func Execute(ctx context.Context) int {
 
 	cleanup := initTracer()
 	defer cleanup()
-	
+
 	profile := false
 
 	rootCmd := &cobra.Command{

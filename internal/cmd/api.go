@@ -4,19 +4,18 @@ import (
 	"context"
 	"os"
 	"strconv"
-	 "log"
 
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 
 	"github.com/Brix101/budgetto-backend/internal/api"
-	"github.com/Brix101/budgetto-backend/internal/util"	
+	"github.com/Brix101/budgetto-backend/internal/util"
 )
 
 func APICmd(ctx context.Context) *cobra.Command {
 	var port int
-	    cleanup := initTracer()
-    		defer cleanup()
+	cleanup := initTracer()
+	defer cleanup()
 
 	cmd := &cobra.Command{
 		Use:   "api",
