@@ -2,12 +2,14 @@ package cmd
 
 import (
 	"context"
+	"io/fs"
 	"os"
 	"strconv"
 
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 
+	"github.com/Brix101/budgetto-backend/frontend"
 	"github.com/Brix101/budgetto-backend/internal/api"
 	"github.com/Brix101/budgetto-backend/internal/util"
 )
@@ -36,6 +38,11 @@ func APICmd(ctx context.Context) *cobra.Command {
 			}
 			defer db.Close()
 
+			assetFS, err := fs.Sub(frontend.Assets(), "dist")
+			if err != nil {
+				return err
+			}
+
 			redis, err := util.NewRedisQueueClient(ctx, 16)
 			if err != nil {
 				return err
@@ -46,7 +53,7 @@ func APICmd(ctx context.Context) *cobra.Command {
 				return err
 			}
 
-			api := api.NewAPI(ctx, logger, redis, db)
+			api := api.NewAPI(ctx, logger, redis, db, assetFS)
 			srv := api.Server(port)
 
 			go func() { _ = srv.ListenAndServe() }()
