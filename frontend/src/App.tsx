@@ -1,9 +1,22 @@
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import reactLogo from "./assets/react.svg";
+import { api } from "./lib/axios-client";
 import viteLogo from "/vite.svg";
+
+async function health() {
+  const res = await api.get("/health");
+  return res.data;
+}
 
 function App() {
   const [count, setCount] = useState(0);
+  const { data } = useQuery({
+    queryKey: ["health"],
+    queryFn: health,
+  });
+
+  console.log(data);
 
   return (
     <>
