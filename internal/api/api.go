@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"fmt"
-	"io/fs"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -24,7 +23,6 @@ import (
 type api struct {
 	logger     *zap.Logger
 	httpClient *http.Client
-	assetFs    fs.FS
 
 	categoryRepo    domain.CategoryRepository
 	accountRepo     domain.AccountRepository
@@ -33,7 +31,7 @@ type api struct {
 	userRepo        domain.UserRepository
 }
 
-func NewAPI(_ context.Context, logger *zap.Logger, _ *redis.Client, pool *pgxpool.Pool, assetFs fs.FS) *api {
+func NewAPI(_ context.Context, logger *zap.Logger, _ *redis.Client, pool *pgxpool.Pool) *api {
 	categoryRepo := repository.NewPostgresCategory(pool)
 	accountRepo := repository.NewPostgresAccount(pool)
 	budgetRepo := repository.NewPostgresBudget(pool)
@@ -45,7 +43,6 @@ func NewAPI(_ context.Context, logger *zap.Logger, _ *redis.Client, pool *pgxpoo
 	return &api{
 		logger:     logger,
 		httpClient: client,
-		assetFs:    assetFs,
 
 		categoryRepo:    categoryRepo,
 		accountRepo:     accountRepo,
@@ -94,12 +91,6 @@ func (a *api) Routes() *chi.Mux {
 		MaxAge:           300, // Maximum value not ignored by any of major browsers
 	}))
 
-	index, static := getStaticHandler(a.assetFs, a.logger)
-
-	r.Get("/", index)
-	r.Get("/vite*", static)
-	r.Get("/assets/*", static)
-
 	r.Get("/swagger/*", httpSwagger.Handler(
 		httpSwagger.URL("http://localhost:5000/swagger/doc.json"), // The url pointing to API definition
 	))
@@ -113,8 +104,6 @@ func (a *api) Routes() *chi.Mux {
 		r.Mount("/auth", a.AuthRoutes())
 		r.Mount("/users", a.UserRoutes())
 	})
-
-	r.NotFound(index)
 
 	return r
 }
