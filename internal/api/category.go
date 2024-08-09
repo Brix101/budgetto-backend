@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -39,7 +38,6 @@ func (a api) CategoryCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		fmt.Println(r.Method)
 		user := ctx.Value(middlewares.UserCtxKey{}).(*domain.UserClaims)
 
 		id, err := strconv.Atoi(chi.URLParam(r, "id"))

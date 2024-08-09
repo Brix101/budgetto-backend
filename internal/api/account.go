@@ -11,12 +11,13 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/Brix101/budgetto-backend/internal/domain"
+	"github.com/Brix101/budgetto-backend/internal/middlewares"
 )
 
 func (a api) AccountRoutes() chi.Router {
 	r := chi.NewRouter()
 
-	r.Use(a.auth0Middleware)
+	r.Use(middlewares.AuthMiddleware)
 
 	r.Get("/", a.accountListHandler)
 	r.Post("/", a.accountCreateHandler)
@@ -37,13 +38,9 @@ func (a api) accountListHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	user, err := a.authClaims(ctx)
-	if err != nil {
-		a.errorResponse(w, r, 403, err)
-		return
-	}
+	user := r.Context().Value(middlewares.UserCtxKey{}).(*domain.UserClaims)
 
-	accs, err := a.accountRepo.GetByUserSUB(ctx, user.Sub)
+	accs, err := a.accountRepo.GetByUserSUB(ctx, int64(user.Sub))
 	if err != nil {
 		a.logger.Error("failed to fetch accounts from database", zap.Error(err))
 		a.errorResponse(w, r, 500, err)
@@ -65,11 +62,7 @@ func (a api) accountGetHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	user, err := a.authClaims(ctx)
-	if err != nil {
-		a.errorResponse(w, r, 403, err)
-		return
-	}
+	user := r.Context().Value(middlewares.UserCtxKey{}).(*domain.UserClaims)
 
 	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
@@ -107,11 +100,7 @@ func (a api) accountCreateHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	user, err := a.authClaims(ctx)
-	if err != nil {
-		a.errorResponse(w, r, 403, err)
-		return
-	}
+	user := r.Context().Value(middlewares.UserCtxKey{}).(*domain.UserClaims)
 
 	reqBody := createAccountRequest{}
 
@@ -155,11 +144,7 @@ func (a api) accountUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	user, err := a.authClaims(ctx)
-	if err != nil {
-		a.errorResponse(w, r, 403, err)
-		return
-	}
+	user := r.Context().Value(middlewares.UserCtxKey{}).(*domain.UserClaims)
 
 	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
@@ -208,11 +193,8 @@ func (a api) accountUpdateHandler(w http.ResponseWriter, r *http.Request) {
 func (a api) accountDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
-	user, err := a.authClaims(ctx)
-	if err != nil {
-		a.errorResponse(w, r, 403, err)
-		return
-	}
+
+	user := r.Context().Value(middlewares.UserCtxKey{}).(*domain.UserClaims)
 
 	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {

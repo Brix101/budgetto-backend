@@ -1,9 +1,7 @@
 package api
 
 import (
-	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"os"
 
@@ -35,16 +33,7 @@ func (a api) protectedCheckHandler(w http.ResponseWriter, r *http.Request) {
 		"status": "available",
 		"port":   os.Getenv("PORT"),
 	}
-	ctx, cancel := context.WithCancel(r.Context())
-	defer cancel()
 
-	claims, err := a.authClaims(ctx)
-	if err != nil {
-		a.errorResponse(w, r, 403, err)
-		return
-	}
-
-	fmt.Println(claims.Sub)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(data)

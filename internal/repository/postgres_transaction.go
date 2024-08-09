@@ -110,7 +110,7 @@ func (p *postgresTransactionRepository) GetByID(ctx context.Context, id int64) (
 	return trns[0], nil
 }
 
-func (p *postgresTransactionRepository) GetByUserSUB(ctx context.Context, sub string) ([]domain.Transaction, error) {
+func (p *postgresTransactionRepository) GetByUserSUB(ctx context.Context, sub int64) ([]domain.Transaction, error) {
 	query := `
 		SELECT 
 			T.ID,

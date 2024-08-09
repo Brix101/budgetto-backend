@@ -88,7 +88,7 @@ func (p *postgresBudgetRepository) GetByID(ctx context.Context, id int64) (domai
 	return buds[0], nil
 }
 
-func (p *postgresBudgetRepository) GetByUserSUB(ctx context.Context, sub string) ([]domain.Budget, error) {
+func (p *postgresBudgetRepository) GetByUserSUB(ctx context.Context, sub int64) ([]domain.Budget, error) {
 	query := `
 		SELECT
 			b.ID,

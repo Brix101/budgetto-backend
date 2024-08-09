@@ -6,14 +6,14 @@ type Account struct {
 	Base
 	Name      string  `json:"name"`
 	Note      string  `json:"note,omitempty"`
-	CreatedBy string  `json:"created_by"`
+	CreatedBy int     `json:"created_by"`
 	Balance   float64 `json:"balance"`
 }
 
 // AccountRepository represents the account's repository contract
 type AccountRepository interface {
 	GetByID(ctx context.Context, id int64) (Account, error)
-	GetByUserSUB(ctx context.Context, sub string) ([]Account, error)
+	GetByUserSUB(ctx context.Context, sub int64) ([]Account, error)
 	// GetAll(ctx context.Context) ([]Account, error)
 	//
 	// CreateOrUpdate(ctx context.Context, acc *Account) error

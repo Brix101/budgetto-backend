@@ -11,12 +11,13 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/Brix101/budgetto-backend/internal/domain"
+	"github.com/Brix101/budgetto-backend/internal/middlewares"
 )
 
 func (a api) BudgetRoutes() chi.Router {
 	r := chi.NewRouter()
 
-	r.Use(a.auth0Middleware)
+	r.Use(middlewares.AuthMiddleware)
 
 	r.Get("/", a.budgetListHandler)
 	r.Post("/", a.budgetCreateHandler)
@@ -36,13 +37,9 @@ func (a api) budgetListHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	user, err := a.authClaims(ctx)
-	if err != nil {
-		a.errorResponse(w, r, 403, err)
-		return
-	}
+	user := r.Context().Value(middlewares.UserCtxKey{}).(*domain.UserClaims)
 
-	buds, err := a.budgetRepo.GetByUserSUB(ctx, user.Sub)
+	buds, err := a.budgetRepo.GetByUserSUB(ctx, int64(user.Sub))
 	if err != nil {
 		a.logger.Error("failed to fetch budgets from database", zap.Error(err))
 		a.errorResponse(w, r, 500, err)
@@ -64,11 +61,7 @@ func (a api) budgetGetHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	user, err := a.authClaims(ctx)
-	if err != nil {
-		a.errorResponse(w, r, 403, err)
-		return
-	}
+	user := r.Context().Value(middlewares.UserCtxKey{}).(*domain.UserClaims)
 
 	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
@@ -109,11 +102,7 @@ func (a api) budgetCreateHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	user, err := a.authClaims(ctx)
-	if err != nil {
-		a.errorResponse(w, r, 403, err)
-		return
-	}
+	user := r.Context().Value(middlewares.UserCtxKey{}).(*domain.UserClaims)
 
 	reqBody := createBudgetRequest{}
 
@@ -163,11 +152,7 @@ func (a api) budgetUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	user, err := a.authClaims(ctx)
-	if err != nil {
-		a.errorResponse(w, r, 403, err)
-		return
-	}
+	user := r.Context().Value(middlewares.UserCtxKey{}).(*domain.UserClaims)
 
 	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
@@ -231,11 +216,7 @@ func (a api) budgetDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	user, err := a.authClaims(ctx)
-	if err != nil {
-		a.errorResponse(w, r, 403, err)
-		return
-	}
+	user := r.Context().Value(middlewares.UserCtxKey{}).(*domain.UserClaims)
 
 	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
