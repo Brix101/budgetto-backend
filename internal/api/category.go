@@ -18,7 +18,7 @@ type CatCtx struct{}
 
 func (a api) CategoryRoutes() chi.Router {
 	r := chi.NewRouter()
-	r.Use(middlewares.AuthMiddleware)
+	r.Use(middlewares.Auth)
 
 	r.Get("/", a.categoryListHandler)
 	r.Post("/", a.categoryCreateHandler)
