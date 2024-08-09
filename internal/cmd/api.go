@@ -16,8 +16,6 @@ import (
 
 func APICmd(ctx context.Context) *cobra.Command {
 	var port int
-	cleanup := initTracer()
-	defer cleanup()
 
 	cmd := &cobra.Command{
 		Use:   "api",

@@ -2,62 +2,21 @@ package cmd
 
 import (
 	"context"
-	"log"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
 	"runtime"
 	"runtime/pprof"
-	"time"
 
+	"github.com/Brix101/budgetto-backend/internal/util"
 	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
-	"go.opentelemetry.io/otel/sdk/resource"
-	sdktrace "go.opentelemetry.io/otel/sdk/trace"
-	semconv "go.opentelemetry.io/otel/semconv/v1.10.0"
 )
-
-func initTracer() func() {
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	res, err := resource.New(ctx, resource.WithAttributes(
-		semconv.ServiceNameKey.String("budgetto"),
-		attribute.String("environment", "development"),
-		semconv.ServiceVersionKey.String("0.0.1"),
-	))
-	if err != nil {
-		log.Fatalf("failed to create resource: %v", err)
-	}
-
-	traceExporter, err := stdouttrace.New(stdouttrace.WithPrettyPrint())
-	if err != nil {
-		log.Fatalf("failed to create trace exporter: %v", err)
-	}
-
-	batchSpanProcessor := sdktrace.NewBatchSpanProcessor(traceExporter)
-	tracerProvider := sdktrace.NewTracerProvider(
-		// sdktrace.WithSampler(sdktrace.AlwaysSample()),
-		sdktrace.WithResource(res),
-		sdktrace.WithSpanProcessor(batchSpanProcessor),
-	)
-	otel.SetTracerProvider(tracerProvider)
-
-	return func() {
-		err := tracerProvider.Shutdown(ctx)
-		if err != nil {
-			log.Fatalf("failed to shutdown provider: %v", err)
-		}
-		cancel()
-	}
-}
 
 func Execute(ctx context.Context) int {
 	_ = godotenv.Load()
 
-	cleanup := initTracer()
+	cleanup := util.InitTracer()
 	defer cleanup()
 
 	profile := false
