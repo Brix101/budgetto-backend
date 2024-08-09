@@ -9,6 +9,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/go-chi/telemetry"
 	"github.com/redis/go-redis/v9"
 
 	"github.com/Brix101/budgetto-backend/internal/domain"
@@ -83,6 +84,7 @@ func (a *api) Routes() *chi.Mux {
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
+	r.Use(telemetry.Collector(telemetry.Config{AllowAny: true}, []string{"/api"}))
 
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"http://192.168.254.180:5173", "http://localhost:5173"},
