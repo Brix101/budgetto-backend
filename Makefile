@@ -1,7 +1,7 @@
 # Variables
 GO_BIN = ~/go/bin
 APP_NAME = budgetto
-SRC_DIR = ./cmd/http
+SRC_DIR = ./cmd/budgetto
 AIR = air 
 GOOSE = goose 
 MIGRATIONS_DIR = migrations  
