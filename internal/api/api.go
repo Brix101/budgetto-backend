@@ -54,7 +54,7 @@ func NewAPI(_ context.Context, logger *zap.Logger, _ *redis.Client, pool *pgxpoo
 
 func (a *api) Server(port int) *http.Server {
 	return &http.Server{
-		Addr:    fmt.Sprintf(":%d", port),
+		Addr:    fmt.Sprintf("0.0.0.0:%d", port),
 		Handler: a.Routes(),
 	}
 }
