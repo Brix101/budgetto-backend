@@ -60,6 +60,7 @@ func Execute(ctx context.Context) int {
 
 	rootCmd.AddCommand(APICmd(ctx))
 	rootCmd.AddCommand(SchedulerCmd(ctx))
+	rootCmd.AddCommand(SeedCmd(ctx))
 
 	go func() {
 		_ = http.ListenAndServe("localhost:6060", nil)

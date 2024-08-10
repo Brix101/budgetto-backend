@@ -40,10 +40,6 @@ func APICmd(ctx context.Context) *cobra.Command {
 			}
 			defer redis.Close()
 
-			if err := util.NewSeeder(ctx, logger, db).CategorySeed(); err != nil {
-				return err
-			}
-
 			api := api.NewAPI(ctx, logger, redis, db)
 			srv := api.Server(port)
 
