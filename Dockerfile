@@ -1,5 +1,5 @@
 # Stage 1 - Build the base
-FROM golang:1.22.0-alpine as builder
+FROM golang:1.22.0-alpine AS builder
 WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
@@ -18,10 +18,6 @@ WORKDIR /app
 
 # Set the environment variable
 ENV GO_ENV=prod
-
-# Create a non-root user and switch to it
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
-USER appuser
 
 # Copy the binary built in the previous stage
 COPY --from=builder /main .
