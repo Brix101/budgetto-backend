@@ -8,7 +8,7 @@ RUN go mod download
 COPY . .
 
 # Build
-RUN go build -o /main ./cmd/budgetto
+RUN CGO_ENABLED=0 GOOS=linux go build -o /main ./cmd/budgetto
 
 # Stage 2: Create a lightweight final image
 FROM alpine:3.14.2
@@ -25,7 +25,6 @@ USER appuser
 
 # Copy the binary built in the previous stage
 COPY --from=builder /main .
-
 
 # Run
 CMD ["./main","api"]
