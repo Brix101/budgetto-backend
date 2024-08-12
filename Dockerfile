@@ -5,10 +5,11 @@ FROM --platform=$BUILDPLATFORM golang:${GO_VERSION} AS build
 WORKDIR /src
 
 # Download dependencies as a separate step to take advantage of Docker's caching.
-RUN --mount=type=cache,id=s/400b718c-243e-4cf9-9289-54cf29c455a6-/go/pkg/mod,target=/go/pkg/mod/ \
-    --mount=type=bind,source=go.sum,target=go.sum \
-    --mount=type=bind,source=go.mod,target=go.mod \
-    go mod download -x
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy the entire project including nested Go files
+COPY . .
 
 # This is the architecture you're building for, which is passed in by the builder.
 # Placing it here allows the previous steps to be cached across architectures.
@@ -18,9 +19,7 @@ ARG TARGETARCH
 # Leverage a cache mount to /go/pkg/mod/ to speed up subsequent builds.
 # Leverage a bind mount to the current directory to avoid having to copy the
 # source code into the container.
-RUN --mount=type=cache,id=s/400b718c-243e-4cf9-9289-54cf29c455a6-/go/pkg/mod,target=/go/pkg/mod/ \
-    --mount=type=bind,target=. \
-    CGO_ENABLED=0 GOARCH=$TARGETARCH go build -o /bin/budgetto ./cmd/budgetto
+RUN CGO_ENABLED=0 GOARCH=$TARGETARCH go build -o /bin/budgetto ./cmd/budgetto
 
 ################################################################################
 # Create a new stage for running the application that contains the minimal
@@ -29,8 +28,7 @@ FROM alpine:latest AS final
 
 # Install any runtime dependencies that are needed to run your application.
 # Leverage a cache mount to /var/cache/apk/ to speed up subsequent builds.
-RUN --mount=type=cache,id=s/400b718c-243e-4cf9-9289-54cf29c455a6-/var/cache/apk,target=/var/cache/apk \
-    apk --update add \
+RUN apk --update add \
         ca-certificates \
         tzdata \
         && \
