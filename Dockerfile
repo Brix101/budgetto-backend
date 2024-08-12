@@ -5,7 +5,7 @@ FROM --platform=$BUILDPLATFORM golang:${GO_VERSION} AS build
 WORKDIR /src
 
 # Download dependencies as a separate step to take advantage of Docker's caching.
-RUN --mount=type=cache,id=s/6964b544-f616-4393-8bf4-d07afcda6956-/go/pkg/mod,target=/go/pkg/mod/ \
+RUN --mount=type=cache,id=s/400b718c-243e-4cf9-9289-54cf29c455a6-/go/pkg/mod,target=/go/pkg/mod/ \
     --mount=type=bind,source=go.sum,target=go.sum \
     --mount=type=bind,source=go.mod,target=go.mod \
     go mod download -x
@@ -18,7 +18,7 @@ ARG TARGETARCH
 # Leverage a cache mount to /go/pkg/mod/ to speed up subsequent builds.
 # Leverage a bind mount to the current directory to avoid having to copy the
 # source code into the container.
-RUN --mount=type=cache,id=s/6964b544-f616-4393-8bf4-d07afcda6956-/go/pkg/mod,target=/go/pkg/mod/ \
+RUN --mount=type=cache,id=s/400b718c-243e-4cf9-9289-54cf29c455a6-/go/pkg/mod,target=/go/pkg/mod/ \
     --mount=type=bind,target=. \
     CGO_ENABLED=0 GOARCH=$TARGETARCH go build -o /bin/budgetto ./cmd/budgetto
 
