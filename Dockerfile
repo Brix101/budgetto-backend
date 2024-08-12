@@ -18,7 +18,7 @@ ARG TARGETARCH
 # Leverage a cache mount to /go/pkg/mod/ to speed up subsequent builds.
 # Leverage a bind mount to the current directory to avoid having to copy the
 # source code into the container.
-RUN --mount=type=cache,id=go-build, target=/go/pkg/mod/ \
+RUN --mount=type=cache,id=6964b544-f616-4393-8bf4-d07afcda6956, target=/go/pkg/mod/ \
     --mount=type=bind,target=. \
     CGO_ENABLED=0 GOARCH=$TARGETARCH go build -o /bin/budgetto ./cmd/budgetto
 
