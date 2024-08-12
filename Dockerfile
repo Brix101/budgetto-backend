@@ -51,7 +51,7 @@ USER appuser
 COPY --from=build /bin/budgetto /bin/
 
 # Set the environment variable
-ENV GO_ENV=prod
+ENV GO_ENV=production
 
 # Run
 CMD ["/bin/budgetto", "api"]
