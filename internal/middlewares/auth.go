@@ -19,13 +19,13 @@ type UserCtxKey struct{}
 func Auth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		tokenSecret := os.Getenv("TOKEN_SECRET")
-		tokenString := extractTokenFromCookie(r)
-		if tokenString == "" {
+		cookieToken, err := r.Cookie(BudgettoToken)
+		if err == nil {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
 
-		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		token, err := jwt.Parse(cookieToken.Value, func(token *jwt.Token) (interface{}, error) {
 			// You should implement your own logic to validate the token and return the appropriate key
 			// For example, you could use a secret key or a public key
 			return []byte(tokenSecret), nil
@@ -55,23 +55,14 @@ func extractTokenFromHeader(r *http.Request) string {
 		return ""
 	}
 
-	parts := strings.Split(authHeader, " ")
-	if len(parts) != 2 || parts[0] != "Bearer" {
-		return ""
-	}
+	token := strings.Replace(authHeader, "Bearer ", "", 1)
 
-	return parts[1]
-}
-
-func extractTokenFromCookie(r *http.Request) string {
-	cookie, err := r.Cookie(BudgettoToken)
-	if err != nil {
-		return ""
-	}
-	return cookie.Value
+	return token
 }
 
 func transformMapClaimsToUserClaims(claims jwt.Claims) (*domain.UserClaims, error) {
+	fmt.Println(claims.GetSubject())
+
 	if jwtClaims, ok := claims.(jwt.MapClaims); ok {
 		sub, ok := jwtClaims["sub"].(float64)
 		if !ok {
@@ -96,7 +87,6 @@ func transformMapClaimsToUserClaims(claims jwt.Claims) (*domain.UserClaims, erro
 		}
 
 		// Add other custom claim fields here if needed
-
 		return userClaims, nil
 	}
 
