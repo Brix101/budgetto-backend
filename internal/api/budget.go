@@ -81,7 +81,7 @@ func (a api) budgetListHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	user := r.Context().Value(middlewares.UserCtxKey{}).(*domain.UserClaims)
+	user := r.Context().Value(middlewares.AuthCtx{}).(*domain.UserClaims)
 	sub, err := user.GetSubject()
 	if err != nil {
 		a.errorResponse(w, r, 500, err)

@@ -12,7 +12,7 @@ import (
 
 const BudgetttoCookieKey = "x-budgetto-token"
 
-type UserCtxKey struct{}
+type AuthCtx struct{}
 
 func Auth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -48,7 +48,7 @@ func Auth(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), UserCtxKey{}, token.Claims)
+		ctx := context.WithValue(r.Context(), AuthCtx{}, token.Claims)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})

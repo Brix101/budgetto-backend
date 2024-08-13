@@ -9,7 +9,7 @@ import (
 )
 
 func GetSub(ctx context.Context) (uint, error) {
-	user := ctx.Value(middlewares.UserCtxKey{}).(jwt.MapClaims)
+	user := ctx.Value(middlewares.AuthCtx{}).(jwt.MapClaims)
 	sub, err := user.GetSubject()
 	if err != nil {
 		return 0, err

@@ -107,7 +107,7 @@ func (a api) transactionListHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	user := ctx.Value(middlewares.UserCtxKey{}).(*domain.UserClaims)
+	user := ctx.Value(middlewares.AuthCtx{}).(*domain.UserClaims)
 	sub, err := user.GetSubject()
 	if err != nil {
 		a.errorResponse(w, r, 500, err)
