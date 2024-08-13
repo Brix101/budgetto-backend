@@ -82,6 +82,7 @@ func (a api) categoryListHandler(w http.ResponseWriter, r *http.Request) {
 
 	sub, err := util.GetSub(ctx)
 	if err != nil {
+		a.logger.Error("failed to get sub from context", zap.Error(err))
 		a.errorResponse(w, r, 500, err)
 		return
 	}
