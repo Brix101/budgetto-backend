@@ -36,12 +36,12 @@ func (u User) CheckPassword(password string) bool {
 
 // UserRepository represents the user's repository contract
 type UserRepository interface {
-	GetByID(ctx context.Context, id int64) (User, error)
+	GetByID(ctx context.Context, id uint) (User, error)
 	GetByEmail(ctx context.Context, email string) (User, error)
 	// GetAll(ctx context.Context) ([]User, error)
 
 	// CreateOrUpdate(ctx context.Context, usr *User) error
 	Update(ctx context.Context, usr *User) (*User, error)
 	Create(ctx context.Context, usr *User) (*User, error)
-	Delete(ctx context.Context, id int64) error
+	Delete(ctx context.Context, id uint) error
 }
