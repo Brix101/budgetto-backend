@@ -13,20 +13,21 @@ import (
 	"github.com/Brix101/budgetto-backend/internal/domain"
 )
 
-const BudgettoTokenKey = "x-budgetto-token"
+const BudgetttoCookieKey = "x-budgetto-token"
 
 type UserCtxKey struct{}
 
 func Auth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		cookieToken, err := r.Cookie(BudgettoTokenKey)
-
-		if err != nil {
+		authHeader := r.Header.Get("Authorization")
+		if authHeader == "" {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
 
-		publicKey := os.Getenv("REFRESH_PUBLIC_KEY")
+		authToken := strings.Replace(authHeader, "Bearer ", "", 1)
+
+		publicKey := os.Getenv("ACCESS_PUBLIC_KEY")
 		keyData, err := base64.StdEncoding.DecodeString(publicKey)
 		if err != nil {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
@@ -39,7 +40,7 @@ func Auth(next http.Handler) http.Handler {
 			return
 		}
 
-		token, err := jwt.Parse(cookieToken.Value, func(token *jwt.Token) (interface{}, error) {
+		token, err := jwt.Parse(authToken, func(token *jwt.Token) (interface{}, error) {
 			// You should implement your own logic to validate the token and return the appropriate key
 			// For example, you could use a secret key or a public key
 			return parsedKey, nil
