@@ -89,9 +89,9 @@ func (u User) GenerateRefreshToken() (string, error) {
 }
 
 type UserWithToken struct {
-	User        User      `json:"user"`
-	AccessToken string    `json:"accessToken"`
-	ExpiresAt   time.Time `json:"expiresAt"`
+	User        User   `json:"user"`
+	AccessToken string `json:"accessToken"`
+	ExpiresIn   int64  `json:"expiresIn"`
 }
 
 func (u User) GenerateUserWithToken() (*UserWithToken, error) {
@@ -100,9 +100,12 @@ func (u User) GenerateUserWithToken() (*UserWithToken, error) {
 		return nil, err
 	}
 
+	expirationTime := time.Now().Add(AccessExp)
+	expiresIn := int64(time.Until(expirationTime).Seconds()) + 1
+
 	return &UserWithToken{
 		User:        u,
 		AccessToken: accessToken,
-		ExpiresAt:   time.Now().Add(AccessExp),
+		ExpiresIn:   expiresIn,
 	}, nil
 }
