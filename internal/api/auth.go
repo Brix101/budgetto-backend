@@ -19,7 +19,7 @@ func (a api) AuthRoutes() chi.Router {
 
 	r.Post("/sign-in", a.signInHandler)
 	r.Post("/sign-up", a.signUpHandler)
-	r.Get("/token-refresh", a.refreshHandler)
+	r.Post("/refresh-token", a.refreshHandler)
 
 	return r
 }

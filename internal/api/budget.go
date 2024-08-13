@@ -12,7 +12,10 @@ import (
 
 	"github.com/Brix101/budgetto-backend/internal/domain"
 	"github.com/Brix101/budgetto-backend/internal/middlewares"
+	"github.com/Brix101/budgetto-backend/internal/util"
 )
+
+type BudgetCtx struct{}
 
 func (a api) BudgetRoutes() chi.Router {
 	r := chi.NewRouter()
@@ -21,11 +24,52 @@ func (a api) BudgetRoutes() chi.Router {
 
 	r.Get("/", a.budgetListHandler)
 	r.Post("/", a.budgetCreateHandler)
-	r.Get("/{id}", a.budgetGetHandler)
-	r.Put("/{id}", a.budgetUpdateHandler)
-	r.Delete("/{id}", a.budgetDeleteHandler)
+
+	r.Route("/{id}", func(r chi.Router) {
+		r.Use(a.BudgetCtx)
+
+		r.Get("/{id}", a.budgetGetHandler)
+		r.Put("/{id}", a.budgetUpdateHandler)
+		r.Delete("/{id}", a.budgetDeleteHandler)
+	})
 
 	return r
+}
+
+func (a api) BudgetCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		sub, err := util.GetSub(ctx)
+		if err != nil {
+			a.errorResponse(w, r, 500, err)
+			return
+		}
+
+		id, err := strconv.Atoi(chi.URLParam(r, "id"))
+		if err != nil {
+			a.errorResponse(w, r, 500, err)
+			return
+		}
+
+		item, err := a.budgetRepo.GetByID(ctx, uint(id))
+		if err != nil {
+			status := 500
+			if err.Error() == domain.ErrNotFound.Error() {
+				status = 404
+			}
+			a.errorResponse(w, r, status, err)
+			return
+		}
+
+		if item.CreatedBy != sub {
+			a.errorResponse(w, r, 403, domain.ErrForbidden)
+			return
+		}
+
+		ctx = context.WithValue(ctx, AccountCtx{}, item)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }
 
 type createBudgetRequest struct {
@@ -38,8 +82,13 @@ func (a api) budgetListHandler(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	user := r.Context().Value(middlewares.UserCtxKey{}).(*domain.UserClaims)
+	sub, err := user.GetSubject()
+	if err != nil {
+		a.errorResponse(w, r, 500, err)
+		return
+	}
 
-	buds, err := a.budgetRepo.GetByUserSUB(ctx, int64(user.Sub))
+	buds, err := a.budgetRepo.GetByUserSUB(ctx, sub)
 	if err != nil {
 		a.logger.Error("failed to fetch budgets from database", zap.Error(err))
 		a.errorResponse(w, r, 500, err)
@@ -57,52 +106,15 @@ func (a api) budgetListHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(resJSON)
 }
 
-func (a api) budgetGetHandler(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithCancel(r.Context())
-	defer cancel()
-
-	user := r.Context().Value(middlewares.UserCtxKey{}).(*domain.UserClaims)
-
-	id, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil {
-		a.errorResponse(w, r, 500, err)
-		return
-	}
-
-	bud, err := a.budgetRepo.GetByID(ctx, int64(id))
-	if err != nil {
-		status := 500
-		if err.Error() == domain.ErrNotFound.Error() {
-			status = 404
-		}
-		if status == 500 {
-			a.logger.Error("failed to fetch from database", zap.Error(err))
-		}
-		a.errorResponse(w, r, status, err)
-		return
-	}
-
-	if bud.CreatedBy != user.Sub {
-		a.errorResponse(w, r, 403, domain.ErrForbidden)
-		return
-	}
-
-	resJSON, err := json.Marshal(bud)
-	if err != nil {
-		a.errorResponse(w, r, 500, err)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(resJSON)
-}
-
 func (a api) budgetCreateHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	user := r.Context().Value(middlewares.UserCtxKey{}).(*domain.UserClaims)
+	sub, err := util.GetSub(ctx)
+	if err != nil {
+		a.errorResponse(w, r, 500, err)
+		return
+	}
 
 	reqBody := createBudgetRequest{}
 
@@ -122,7 +134,7 @@ func (a api) budgetCreateHandler(w http.ResponseWriter, r *http.Request) {
 	budReq := domain.Budget{
 		Amount:     reqBody.Amount,
 		CategoryID: reqBody.CategoryID,
-		CreatedBy:  user.Sub,
+		CreatedBy:  sub,
 	}
 
 	newBud, err := a.budgetRepo.Create(ctx, &budReq)
@@ -132,7 +144,7 @@ func (a api) budgetCreateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	bud, err := a.budgetRepo.GetByID(ctx, int64(newBud.ID))
+	bud, err := a.budgetRepo.GetByID(ctx, newBud.ID)
 	if err != nil {
 		a.errorResponse(w, r, 500, err)
 		return
@@ -148,48 +160,41 @@ func (a api) budgetCreateHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(resJSON)
 }
 
-func (a api) budgetUpdateHandler(w http.ResponseWriter, r *http.Request) {
+func (a api) budgetGetHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	user := r.Context().Value(middlewares.UserCtxKey{}).(*domain.UserClaims)
+	bud, ok := ctx.Value(BudgetCtx{}).(domain.Budget)
+	if !ok {
+		http.Error(w, domain.ErrNotFound.Error(), http.StatusNotFound)
+		return
+	}
 
-	id, err := strconv.Atoi(chi.URLParam(r, "id"))
+	resJSON, err := json.Marshal(bud)
 	if err != nil {
 		a.errorResponse(w, r, 500, err)
 		return
 	}
 
-	bud, err := a.budgetRepo.GetByID(ctx, int64(id))
-	if err != nil {
-		status := 500
-		if err.Error() == domain.ErrNotFound.Error() {
-			status = 404
-		}
-		a.errorResponse(w, r, status, err)
-		return
-	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(resJSON)
+}
 
-	if bud.CreatedBy != user.Sub {
-		a.errorResponse(w, r, 403, domain.ErrForbidden)
-		return
-	}
+func (a api) budgetUpdateHandler(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithCancel(r.Context())
+	defer cancel()
 
-	if err := json.NewDecoder(r.Body).Decode(&bud); err != nil {
-		a.logger.Error("failed to parse request json", zap.Error(err))
-		a.errorResponse(w, r, 422, err)
-		return
-	}
-	defer r.Body.Close()
+	bud := ctx.Value(BudgetCtx{}).(domain.Budget)
 
-	updatedBud, err := a.budgetRepo.Update(ctx, &bud)
+	upBud, err := a.budgetRepo.Update(ctx, &bud)
 	if err != nil {
 		a.logger.Error("failed to update budget", zap.Error(err))
 		a.errorResponse(w, r, 500, err)
 		return
 	}
 
-	cat, err := a.categoryRepo.GetByID(ctx, int64(updatedBud.CategoryID))
+	cat, err := a.categoryRepo.GetByID(ctx, upBud.CategoryID)
 	if err != nil {
 		status := 500
 		if err.Error() == domain.ErrNotFound.Error() {
@@ -199,9 +204,9 @@ func (a api) budgetUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	updatedBud.Category = cat
+	upBud.Category = cat
 
-	resJSON, err := json.Marshal(updatedBud)
+	resJSON, err := json.Marshal(upBud)
 	if err != nil {
 		a.errorResponse(w, r, 500, err)
 		return
@@ -216,30 +221,13 @@ func (a api) budgetDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	user := r.Context().Value(middlewares.UserCtxKey{}).(*domain.UserClaims)
-
-	id, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil {
-		a.errorResponse(w, r, 500, err)
+	bud, ok := ctx.Value(BudgetCtx{}).(domain.Budget)
+	if !ok {
+		http.Error(w, domain.ErrNotFound.Error(), http.StatusNotFound)
 		return
 	}
 
-	bud, err := a.budgetRepo.GetByID(ctx, int64(id))
-	if err != nil {
-		status := 500
-		if err.Error() == domain.ErrNotFound.Error() {
-			status = 404
-		}
-		a.errorResponse(w, r, status, err)
-		return
-	}
-
-	if bud.CreatedBy != user.Sub {
-		a.errorResponse(w, r, 403, domain.ErrForbidden)
-		return
-	}
-
-	if err := a.budgetRepo.Delete(ctx, int64(id)); err != nil {
+	if err := a.budgetRepo.Delete(ctx, bud.ID); err != nil {
 		a.logger.Error("failed to delete budget", zap.Error(err))
 		status := 500
 		if err.Error() == domain.ErrNotFound.Error() {

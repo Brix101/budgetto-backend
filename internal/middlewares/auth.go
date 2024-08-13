@@ -79,11 +79,6 @@ func transformMapClaimsToUserClaims(claims jwt.Claims) (*domain.UserClaims, erro
 	fmt.Println(claims.GetSubject())
 
 	if jwtClaims, ok := claims.(jwt.MapClaims); ok {
-		sub, ok := jwtClaims["sub"].(float64)
-		if !ok {
-			return nil, fmt.Errorf("invalid 'sub' claim")
-		}
-
 		name, ok := jwtClaims["name"].(string)
 		if !ok {
 			return nil, fmt.Errorf("invalid 'name' claim")
@@ -96,7 +91,6 @@ func transformMapClaimsToUserClaims(claims jwt.Claims) (*domain.UserClaims, erro
 
 		// Create a new instance of *UserClaims with the extracted values
 		userClaims := &domain.UserClaims{
-			Sub:   int(sub),
 			Name:  name,
 			Email: email,
 		}

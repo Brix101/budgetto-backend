@@ -56,7 +56,7 @@ func (p *postgresBudgetRepository) fetch(ctx context.Context, query string, args
 	return buds, nil
 }
 
-func (p *postgresBudgetRepository) GetByID(ctx context.Context, id int64) (domain.Budget, error) {
+func (p *postgresBudgetRepository) GetByID(ctx context.Context, id uint) (domain.Budget, error) {
 	query := `
 		SELECT
 			b.ID,
@@ -88,7 +88,7 @@ func (p *postgresBudgetRepository) GetByID(ctx context.Context, id int64) (domai
 	return buds[0], nil
 }
 
-func (p *postgresBudgetRepository) GetByUserSUB(ctx context.Context, sub int64) ([]domain.Budget, error) {
+func (p *postgresBudgetRepository) GetByUserSUB(ctx context.Context, sub string) ([]domain.Budget, error) {
 	query := `
 		SELECT
 			b.ID,
@@ -178,7 +178,7 @@ func (p *postgresBudgetRepository) Update(ctx context.Context, bud *domain.Budge
 	return bud, nil
 }
 
-func (p *postgresBudgetRepository) Delete(ctx context.Context, id int64) error {
+func (p *postgresBudgetRepository) Delete(ctx context.Context, id uint) error {
 	query := `
 		UPDATE budgets
 		SET 

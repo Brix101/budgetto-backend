@@ -16,7 +16,6 @@ type UserClaims struct {
 	jwt.RegisteredClaims
 	Name  string `json:"name"`
 	Email string `json:"email"`
-	Sub   int    `json:"sub"`
 }
 
 func (u User) GenerateClaims() (string, error) {
@@ -35,14 +34,13 @@ func (u User) GenerateClaims() (string, error) {
 		jwt.RegisteredClaims{
 			Issuer:    "Budgetto",
 			ID:        fmt.Sprintf("%d", u.ID),
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(RefreshExp)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(AccessExp)),
 			NotBefore: jwt.NewNumericDate(time.Now()),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			Subject:   fmt.Sprintf("%d", u.ID),
 		},
 		u.Name,
 		u.Email,
-		int(u.ID),
 	}
 
 	// Create token with claims
