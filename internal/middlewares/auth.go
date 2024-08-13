@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"net/http"
 	"os"
@@ -12,15 +13,28 @@ import (
 	"github.com/Brix101/budgetto-backend/internal/domain"
 )
 
-const BudgettoToken = "budgetto-token"
+const BudgettoTokenKey = "x-budgetto-token"
 
 type UserCtxKey struct{}
 
 func Auth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		tokenSecret := os.Getenv("TOKEN_SECRET")
-		cookieToken, err := r.Cookie(BudgettoToken)
-		if err == nil {
+		cookieToken, err := r.Cookie(BudgettoTokenKey)
+
+		if err != nil {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		publicKey := os.Getenv("REFRESH_PUBLIC_KEY")
+		keyData, err := base64.StdEncoding.DecodeString(publicKey)
+		if err != nil {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		parsedKey, err := jwt.ParseRSAPublicKeyFromPEM([]byte(keyData))
+		if err != nil {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
@@ -28,7 +42,7 @@ func Auth(next http.Handler) http.Handler {
 		token, err := jwt.Parse(cookieToken.Value, func(token *jwt.Token) (interface{}, error) {
 			// You should implement your own logic to validate the token and return the appropriate key
 			// For example, you could use a secret key or a public key
-			return []byte(tokenSecret), nil
+			return parsedKey, nil
 		})
 
 		if err != nil || !token.Valid {

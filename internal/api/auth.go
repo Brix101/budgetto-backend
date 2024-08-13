@@ -2,11 +2,16 @@ package api
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"net/http"
+	"os"
+	"strconv"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator"
+	"github.com/golang-jwt/jwt/v5"
 	"go.uber.org/zap"
 
 	"github.com/Brix101/budgetto-backend/internal/domain"
@@ -18,6 +23,7 @@ func (a api) AuthRoutes() chi.Router {
 
 	r.Post("/sign-in", a.signInHandler)
 	r.Post("/sign-up", a.signUpHandler)
+	r.Post("/refresh", a.refreshHandler)
 
 	return r
 }
@@ -60,14 +66,21 @@ func (a api) signInHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := usr.GenerateClaims()
+	token, err := usr.GenerateRefreshToken()
 	if err != nil {
 		a.logger.Error("failed to generate user claims", zap.Error(err))
 		a.errorResponse(w, r, 500, err)
 		return
 	}
 
-	resJSON, err := json.Marshal(usr)
+	data, err := usr.GenerateUserWithToken()
+	if err != nil {
+		a.logger.Error("failed to generate user with token", zap.Error(err))
+		a.errorResponse(w, r, 500, err)
+		return
+	}
+
+	resJSON, err := json.Marshal(data)
 	if err != nil {
 		a.errorResponse(w, r, 500, err)
 		return
@@ -75,10 +88,11 @@ func (a api) signInHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Create and set cookies in the response
 	cookie := http.Cookie{
-		Name:     middlewares.BudgettoToken, // Cookie name
-		Value:    token,                     // Cookie value (you can customize this)
-		Path:     "/",                       // Cookie path
-		HttpOnly: true,                      // Prevent JavaScript access
+		Name:     middlewares.BudgettoTokenKey, // Cookie name
+		Value:    token,                        // Cookie value (you can customize this)
+		Path:     "/",                          // Cookie path
+		HttpOnly: true,                         // Prevent JavaScript access
+		Expires:  time.Now().Add(domain.RefreshExp),
 		// You can set more attributes like Expires, MaxAge, Secure, etc. as needed.
 	}
 
@@ -124,6 +138,72 @@ func (a api) signUpHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resJSON, err := json.Marshal(usr)
+	if err != nil {
+		a.errorResponse(w, r, 500, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(resJSON)
+}
+
+func (a api) refreshHandler(w http.ResponseWriter, r *http.Request) {
+	cookie, err := r.Cookie(middlewares.BudgettoTokenKey)
+	if err != nil {
+		a.errorResponse(w, r, 401, err)
+		return
+	}
+
+	publicKey := os.Getenv("REFRESH_PUBLIC_KEY")
+	keyData, err := base64.StdEncoding.DecodeString(publicKey)
+	if err != nil {
+		a.errorResponse(w, r, 401, err)
+		return
+	}
+
+	parsedKey, err := jwt.ParseRSAPublicKeyFromPEM([]byte(keyData))
+	if err != nil {
+		a.errorResponse(w, r, 401, err)
+		return
+	}
+
+	token, err := jwt.Parse(cookie.Value, func(token *jwt.Token) (interface{}, error) {
+		// You should implement your own logic to validate the token and return the appropriate key
+		// For example, you could use a secret key or a public key
+		return parsedKey, nil
+	})
+
+	if err != nil || !token.Valid {
+		a.errorResponse(w, r, 401, err)
+		return
+	}
+
+	sub, err := token.Claims.GetSubject()
+	if err != nil {
+		a.errorResponse(w, r, 401, err)
+		return
+	}
+
+	userId, err := strconv.Atoi(sub)
+	if err != nil {
+		a.errorResponse(w, r, 401, err)
+		return
+	}
+
+	usr, err := a.userRepo.GetByID(r.Context(), int64(userId))
+	if err != nil {
+		a.errorResponse(w, r, 401, err)
+		return
+	}
+
+	data, err := usr.GenerateUserWithToken()
+	if err != nil {
+		a.errorResponse(w, r, 500, err)
+		return
+	}
+
+	resJSON, err := json.Marshal(data)
 	if err != nil {
 		a.errorResponse(w, r, 500, err)
 		return

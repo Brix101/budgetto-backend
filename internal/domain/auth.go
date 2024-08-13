@@ -1,12 +1,16 @@
 package domain
 
 import (
+	"encoding/base64"
 	"fmt"
 	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
+
+var AccessExp = time.Hour * 1
+var RefreshExp = time.Hour * 24 * 90
 
 type UserClaims struct {
 	jwt.RegisteredClaims
@@ -15,18 +19,26 @@ type UserClaims struct {
 	Sub   int    `json:"sub"`
 }
 
-type userToken struct {
-	AccessToken string `json:"access_token"`
-}
-
 func (u User) GenerateClaims() (string, error) {
-	tokenSecret := os.Getenv("TOKEN_SECRET")
+	privateKey := os.Getenv("ACCESS_PRIVATE_KEY")
+	keyData, err := base64.StdEncoding.DecodeString(privateKey)
+	if err != nil {
+		return "", err
+	}
+
+	parsedKey, err := jwt.ParseRSAPrivateKeyFromPEM([]byte(keyData))
+	if err != nil {
+		return "", err
+	}
 
 	claims := UserClaims{
 		jwt.RegisteredClaims{
+			Issuer:    "Budgetto",
 			ID:        fmt.Sprintf("%d", u.ID),
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 72)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(RefreshExp)),
+			NotBefore: jwt.NewNumericDate(time.Now()),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			Subject:   fmt.Sprintf("%d", u.ID),
 		},
 		u.Name,
 		u.Email,
@@ -34,13 +46,65 @@ func (u User) GenerateClaims() (string, error) {
 	}
 
 	// Create token with claims
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
 
 	// Generate encoded token and send it as response.
-	t, err := token.SignedString([]byte(tokenSecret))
+	t, err := token.SignedString(parsedKey)
 	if err != nil {
 		return "", err
 	}
 
 	return t, nil
+}
+
+func (u User) GenerateRefreshToken() (string, error) {
+	claims := jwt.RegisteredClaims{
+		Issuer:    "Budgetto",
+		ID:        fmt.Sprintf("%d", u.ID),
+		ExpiresAt: jwt.NewNumericDate(time.Now().Add(RefreshExp)),
+		NotBefore: jwt.NewNumericDate(time.Now()),
+		IssuedAt:  jwt.NewNumericDate(time.Now()),
+		Subject:   fmt.Sprintf("%d", u.ID),
+	}
+
+	privateKey := os.Getenv("REFRESH_PRIVATE_KEY")
+	keyData, err := base64.StdEncoding.DecodeString(privateKey)
+	if err != nil {
+		return "", err
+	}
+
+	parsedKey, err := jwt.ParseRSAPrivateKeyFromPEM([]byte(keyData))
+	if err != nil {
+		return "", err
+	}
+
+	// Create token with claims
+	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
+
+	// Generate encoded token and send it as response.
+	t, err := token.SignedString(parsedKey)
+	if err != nil {
+		return "", err
+	}
+
+	return t, nil
+}
+
+type UserWithToken struct {
+	User        User      `json:"user"`
+	AccessToken string    `json:"accessToken"`
+	ExpiresAt   time.Time `json:"expiresAt"`
+}
+
+func (u User) GenerateUserWithToken() (*UserWithToken, error) {
+	accessToken, err := u.GenerateClaims()
+	if err != nil {
+		return nil, err
+	}
+
+	return &UserWithToken{
+		User:        u,
+		AccessToken: accessToken,
+		ExpiresAt:   time.Now().Add(AccessExp),
+	}, nil
 }
