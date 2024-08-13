@@ -52,7 +52,7 @@ func (p *postgresCategoryRepository) fetch(ctx context.Context, query string, ar
 	return cats, nil
 }
 
-func (p *postgresCategoryRepository) GetByID(ctx context.Context, id int64) (domain.Category, error) {
+func (p *postgresCategoryRepository) GetByID(ctx context.Context, id uint) (domain.Category, error) {
 	query := `
 		SELECT
 			id,
@@ -79,7 +79,7 @@ func (p *postgresCategoryRepository) GetByID(ctx context.Context, id int64) (dom
 	return cat[0], nil
 }
 
-func (p *postgresCategoryRepository) GetByUserSUB(ctx context.Context, sub int64) ([]domain.Category, error) {
+func (p *postgresCategoryRepository) GetByUserSUB(ctx context.Context, sub uint) ([]domain.Category, error) {
 	query := `
 		SELECT
 			id,
@@ -193,7 +193,7 @@ func (p *postgresCategoryRepository) Update(ctx context.Context, cat *domain.Cat
 	return cat, nil
 }
 
-func (p *postgresCategoryRepository) Delete(ctx context.Context, id int64) error {
+func (p *postgresCategoryRepository) Delete(ctx context.Context, id uint) error {
 	query := `
 		UPDATE categories
 		SET 

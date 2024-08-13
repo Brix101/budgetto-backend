@@ -54,7 +54,7 @@ func (p *postgresUserRepository) fetch(ctx context.Context, query string, args .
 	return usrs, nil
 }
 
-func (p *postgresUserRepository) GetByID(ctx context.Context, id int64) (domain.User, error) {
+func (p *postgresUserRepository) GetByID(ctx context.Context, id uint) (domain.User, error) {
 	query := `
 		SELECT
 			id,
@@ -177,7 +177,7 @@ func (p *postgresUserRepository) Update(ctx context.Context, usr *domain.User) (
 	return usr, nil
 }
 
-func (p *postgresUserRepository) Delete(ctx context.Context, id int64) error {
+func (p *postgresUserRepository) Delete(ctx context.Context, id uint) error {
 	query := `
 		UPDATE users
 		SET

@@ -12,6 +12,7 @@ import (
 
 	"github.com/Brix101/budgetto-backend/internal/domain"
 	"github.com/Brix101/budgetto-backend/internal/middlewares"
+	"github.com/Brix101/budgetto-backend/internal/util"
 )
 
 type CatCtx struct{}
@@ -38,7 +39,11 @@ func (a api) CategoryCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		user := ctx.Value(middlewares.UserCtxKey{}).(*domain.UserClaims)
+		sub, err := util.GetSub(ctx)
+		if err != nil {
+			a.errorResponse(w, r, 500, err)
+			return
+		}
 
 		id, err := strconv.Atoi(chi.URLParam(r, "id"))
 		if err != nil {
@@ -46,7 +51,7 @@ func (a api) CategoryCtx(next http.Handler) http.Handler {
 			return
 		}
 
-		item, err := a.categoryRepo.GetByID(ctx, int64(id))
+		item, err := a.categoryRepo.GetByID(ctx, uint(id))
 		if err != nil {
 			status := 500
 			if err.Error() == domain.ErrNotFound.Error() {
@@ -56,7 +61,7 @@ func (a api) CategoryCtx(next http.Handler) http.Handler {
 			return
 		}
 
-		if item.CreatedBy != nil && *item.CreatedBy != uint(user.Sub) {
+		if item.CreatedBy != nil && *item.CreatedBy != sub {
 			a.errorResponse(w, r, 403, domain.ErrForbidden)
 			return
 		}
@@ -75,9 +80,14 @@ func (a api) categoryListHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	user := r.Context().Value(middlewares.UserCtxKey{}).(*domain.UserClaims)
+	sub, err := util.GetSub(ctx)
+	if err != nil {
+		a.logger.Error("failed to get sub from context", zap.Error(err))
+		a.errorResponse(w, r, 500, err)
+		return
+	}
 
-	cats, err := a.categoryRepo.GetByUserSUB(ctx, int64(user.Sub))
+	cats, err := a.categoryRepo.GetByUserSUB(ctx, sub)
 	if err != nil {
 		a.logger.Error("failed to fetch categories from database", zap.Error(err))
 		a.errorResponse(w, r, 500, err)
@@ -99,7 +109,11 @@ func (a api) categoryCreateHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	user := r.Context().Value(middlewares.UserCtxKey{}).(*domain.UserClaims)
+	sub, err := util.GetSub(ctx)
+	if err != nil {
+		a.errorResponse(w, r, 500, err)
+		return
+	}
 
 	reqBody := createCategoryRequest{}
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
@@ -115,11 +129,10 @@ func (a api) categoryCreateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userId := uint(user.Sub)
 	newCat := domain.Category{
 		Name:      reqBody.Name,
 		Note:      reqBody.Note,
-		CreatedBy: &userId,
+		CreatedBy: &sub,
 	}
 
 	cat, err := a.categoryRepo.Create(ctx, &newCat)
@@ -140,11 +153,11 @@ func (a api) categoryCreateHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a api) categoryGetHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx, cancel := context.WithCancel(r.Context())
+	defer cancel()
 
 	item, ok := ctx.Value(CatCtx{}).(domain.Category)
 	if !ok {
-
 		http.Error(w, domain.ErrNotFound.Error(), http.StatusNotFound)
 		return
 	}
@@ -163,16 +176,10 @@ func (a api) categoryUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	user := r.Context().Value(middlewares.UserCtxKey{}).(*domain.UserClaims)
 	item, ok := ctx.Value(CatCtx{}).(domain.Category)
 	if !ok {
 
 		http.Error(w, domain.ErrNotFound.Error(), http.StatusNotFound)
-		return
-	}
-
-	if item.CreatedBy == nil || *item.CreatedBy != uint(user.Sub) {
-		a.errorResponse(w, r, 403, domain.ErrForbidden)
 		return
 	}
 
@@ -183,14 +190,14 @@ func (a api) categoryUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	updatedCat, err := a.categoryRepo.Update(ctx, &item)
+	cat, err := a.categoryRepo.Update(ctx, &item)
 	if err != nil {
 		a.logger.Error("failed to delete category", zap.Error(err))
 		a.errorResponse(w, r, 500, err)
 		return
 	}
 
-	resJSON, err := json.Marshal(updatedCat)
+	resJSON, err := json.Marshal(cat)
 	if err != nil {
 		a.errorResponse(w, r, 500, err)
 		return
@@ -204,18 +211,14 @@ func (a api) categoryUpdateHandler(w http.ResponseWriter, r *http.Request) {
 func (a api) categoryDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
-	user := r.Context().Value(middlewares.UserCtxKey{}).(*domain.UserClaims)
+
 	item, ok := ctx.Value(CatCtx{}).(domain.Category)
 	if !ok {
 		http.Error(w, domain.ErrNotFound.Error(), http.StatusNotFound)
 		return
 	}
 
-	if item.CreatedBy == nil || *item.CreatedBy != uint(user.Sub) {
-		a.errorResponse(w, r, 403, domain.ErrForbidden)
-		return
-	}
-	if err := a.categoryRepo.Delete(ctx, int64(item.ID)); err != nil {
+	if err := a.categoryRepo.Delete(ctx, item.ID); err != nil {
 		a.logger.Error("failed to delete category", zap.Error(err))
 		status := 500
 		if err.Error() == domain.ErrNotFound.Error() {

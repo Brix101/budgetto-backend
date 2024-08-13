@@ -68,7 +68,7 @@ func (p *postgresTransactionRepository) fetch(ctx context.Context, query string,
 	return trns, nil
 }
 
-func (p *postgresTransactionRepository) GetByID(ctx context.Context, id int64) (domain.Transaction, error) {
+func (p *postgresTransactionRepository) GetByID(ctx context.Context, id uint) (domain.Transaction, error) {
 	query := `
 		SELECT 
 			T.ID,
@@ -110,7 +110,7 @@ func (p *postgresTransactionRepository) GetByID(ctx context.Context, id int64) (
 	return trns[0], nil
 }
 
-func (p *postgresTransactionRepository) GetByUserSUB(ctx context.Context, sub int64) ([]domain.Transaction, error) {
+func (p *postgresTransactionRepository) GetByUserSUB(ctx context.Context, sub string) ([]domain.Transaction, error) {
 	query := `
 		SELECT 
 			T.ID,
@@ -243,7 +243,7 @@ func (p *postgresTransactionRepository) Update(ctx context.Context, trn *domain.
 	return trn, nil
 }
 
-func (p *postgresTransactionRepository) Delete(ctx context.Context, id int64) error {
+func (p *postgresTransactionRepository) Delete(ctx context.Context, id uint) error {
 	query := `
 		UPDATE transactions
 		SET 

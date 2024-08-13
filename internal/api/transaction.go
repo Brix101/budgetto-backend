@@ -12,7 +12,10 @@ import (
 
 	"github.com/Brix101/budgetto-backend/internal/domain"
 	"github.com/Brix101/budgetto-backend/internal/middlewares"
+	"github.com/Brix101/budgetto-backend/internal/util"
 )
+
+type TransactionCtx struct{}
 
 func (a api) TransactionRoutes() chi.Router {
 	r := chi.NewRouter()
@@ -21,12 +24,53 @@ func (a api) TransactionRoutes() chi.Router {
 
 	r.Get("/", a.transactionListHandler)
 	r.Post("/", a.transactionCreateHandler)
-	r.Get("/{id}", a.transactionGetHandler)
-	r.Put("/{id}", a.transactionUpdateHandler)
-	r.Delete("/{id}", a.transactionDeleteHandler)
 	r.Get("/operations", a.transactionOpListHandler)
 
+	r.Route("/{id}", func(r chi.Router) {
+		r.Use(a.TransctionCtx)
+
+		r.Get("/", a.transactionGetHandler)
+		r.Put("/", a.transactionUpdateHandler)
+		r.Delete("/", a.transactionDeleteHandler)
+	})
+
 	return r
+}
+
+func (a api) TransctionCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		sub, err := util.GetSub(ctx)
+		if err != nil {
+			a.errorResponse(w, r, 500, err)
+			return
+		}
+
+		id, err := strconv.Atoi(chi.URLParam(r, "id"))
+		if err != nil {
+			a.errorResponse(w, r, 500, err)
+			return
+		}
+
+		item, err := a.transactionRepo.GetByID(ctx, uint(id))
+		if err != nil {
+			status := 500
+			if err.Error() == domain.ErrNotFound.Error() {
+				status = 404
+			}
+			a.errorResponse(w, r, status, err)
+			return
+		}
+
+		if item.CreatedBy != sub {
+			a.errorResponse(w, r, 403, domain.ErrForbidden)
+			return
+		}
+
+		ctx = context.WithValue(ctx, CatCtx{}, item)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }
 
 type createTransactionRequest struct {
@@ -63,9 +107,14 @@ func (a api) transactionListHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	user := r.Context().Value(middlewares.UserCtxKey{}).(*domain.UserClaims)
+	user := ctx.Value(middlewares.AuthCtx{}).(*domain.UserClaims)
+	sub, err := user.GetSubject()
+	if err != nil {
+		a.errorResponse(w, r, 500, err)
+		return
+	}
 
-	trns, err := a.transactionRepo.GetByUserSUB(ctx, int64(user.Sub))
+	trns, err := a.transactionRepo.GetByUserSUB(ctx, sub)
 	if err != nil {
 		a.logger.Error("failed to fetch transactions from database", zap.Error(err))
 		a.errorResponse(w, r, 500, err)
@@ -83,52 +132,15 @@ func (a api) transactionListHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(resJSON)
 }
 
-func (a api) transactionGetHandler(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithCancel(r.Context())
-	defer cancel()
-
-	user := r.Context().Value(middlewares.UserCtxKey{}).(*domain.UserClaims)
-
-	id, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil {
-		a.errorResponse(w, r, 500, err)
-		return
-	}
-
-	trn, err := a.transactionRepo.GetByID(ctx, int64(id))
-	if err != nil {
-		status := 500
-		if err.Error() == domain.ErrNotFound.Error() {
-			status = 404
-		}
-		if status == 500 {
-			a.logger.Error("failed to fetch from database", zap.Error(err))
-		}
-		a.errorResponse(w, r, status, err)
-		return
-	}
-
-	if trn.CreatedBy != user.Sub {
-		a.errorResponse(w, r, 403, domain.ErrForbidden)
-		return
-	}
-
-	resJSON, err := json.Marshal(trn)
-	if err != nil {
-		a.errorResponse(w, r, 500, err)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(resJSON)
-}
-
 func (a api) transactionCreateHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	user := r.Context().Value(middlewares.UserCtxKey{}).(*domain.UserClaims)
+	sub, err := util.GetSub(ctx)
+	if err != nil {
+		a.errorResponse(w, r, 500, err)
+		return
+	}
 
 	reqBody := createTransactionRequest{}
 
@@ -149,7 +161,7 @@ func (a api) transactionCreateHandler(w http.ResponseWriter, r *http.Request) {
 		Amount:     reqBody.Amount,
 		CategoryID: reqBody.CategoryID,
 		AccountID:  reqBody.AccountID,
-		CreatedBy:  user.Sub,
+		CreatedBy:  sub,
 	}
 
 	newTrn, err := a.transactionRepo.Create(ctx, &trnReq)
@@ -159,7 +171,7 @@ func (a api) transactionCreateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	trn, err := a.transactionRepo.GetByID(ctx, int64(newTrn.ID))
+	trn, err := a.transactionRepo.GetByID(ctx, newTrn.ID)
 	if err != nil {
 		a.errorResponse(w, r, 500, err)
 		return
@@ -175,48 +187,52 @@ func (a api) transactionCreateHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(resJSON)
 }
 
-func (a api) transactionUpdateHandler(w http.ResponseWriter, r *http.Request) {
+func (a api) transactionGetHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	user := r.Context().Value(middlewares.UserCtxKey{}).(*domain.UserClaims)
+	item, ok := ctx.Value(TransactionCtx{}).(domain.Transaction)
+	if !ok {
+		http.Error(w, domain.ErrNotFound.Error(), http.StatusNotFound)
+		return
+	}
 
-	id, err := strconv.Atoi(chi.URLParam(r, "id"))
+	resJSON, err := json.Marshal(item)
 	if err != nil {
 		a.errorResponse(w, r, 500, err)
 		return
 	}
 
-	reqTrn, err := a.transactionRepo.GetByID(ctx, int64(id))
-	if err != nil {
-		status := 500
-		if err.Error() == domain.ErrNotFound.Error() {
-			status = 404
-		}
-		a.errorResponse(w, r, status, err)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(resJSON)
+}
+
+func (a api) transactionUpdateHandler(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithCancel(r.Context())
+	defer cancel()
+
+	item, ok := ctx.Value(TransactionCtx{}).(domain.Transaction)
+	if !ok {
+		http.Error(w, domain.ErrNotFound.Error(), http.StatusNotFound)
 		return
 	}
 
-	if reqTrn.CreatedBy != user.Sub {
-		a.errorResponse(w, r, 403, domain.ErrForbidden)
-		return
-	}
-
-	if err := json.NewDecoder(r.Body).Decode(&reqTrn); err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&item); err != nil {
 		a.logger.Error("failed to parse request json", zap.Error(err))
 		a.errorResponse(w, r, 422, err)
 		return
 	}
 	defer r.Body.Close()
 
-	upTrn, err := a.transactionRepo.Update(ctx, &reqTrn)
+	upTrn, err := a.transactionRepo.Update(ctx, &item)
 	if err != nil {
 		a.logger.Error("failed to update transaction", zap.Error(err))
 		a.errorResponse(w, r, 500, err)
 		return
 	}
 
-	trn, err := a.transactionRepo.GetByID(ctx, int64(upTrn.ID))
+	trn, err := a.transactionRepo.GetByID(ctx, upTrn.ID)
 	if err != nil {
 		a.errorResponse(w, r, 500, err)
 		return
@@ -237,30 +253,13 @@ func (a api) transactionDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
 
-	user := r.Context().Value(middlewares.UserCtxKey{}).(*domain.UserClaims)
-
-	id, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil {
-		a.errorResponse(w, r, 500, err)
+	item, ok := ctx.Value(TransactionCtx{}).(domain.Transaction)
+	if !ok {
+		http.Error(w, domain.ErrNotFound.Error(), http.StatusNotFound)
 		return
 	}
 
-	trn, err := a.transactionRepo.GetByID(ctx, int64(id))
-	if err != nil {
-		status := 500
-		if err.Error() == domain.ErrNotFound.Error() {
-			status = 404
-		}
-		a.errorResponse(w, r, status, err)
-		return
-	}
-
-	if trn.CreatedBy != user.Sub {
-		a.errorResponse(w, r, 403, domain.ErrForbidden)
-		return
-	}
-
-	if err := a.transactionRepo.Delete(ctx, int64(id)); err != nil {
+	if err := a.transactionRepo.Delete(ctx, item.ID); err != nil {
 		a.logger.Error("failed to delete transactiond", zap.Error(err))
 		status := 500
 		if err.Error() == domain.ErrNotFound.Error() {
