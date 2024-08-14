@@ -5,13 +5,13 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/Brix101/budgetto-backend/internal/cmd"
+	budgettocmd "github.com/Brix101/budgetto-backend/cmd"
 )
 
 func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill)
 	defer cancel()
 
-	ret := cmd.Execute(ctx)
+	ret := budgettocmd.Execute(ctx)
 	os.Exit(ret)
 }
