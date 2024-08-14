@@ -84,7 +84,7 @@ func (a *api) Routes() *chi.Mux {
 	r.Use(telemetry.Collector(telemetry.Config{AllowAny: true}, []string{"/api"}))
 
 	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"http://192.168.254.180:5173", "http://localhost:5173"},
+		AllowedOrigins:   []string{"http://localhost:5173", "https://budgetto.vercel.app", "https://budgetto.brixterporras.com"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "Link"},
 		AllowCredentials: false,

@@ -1,4 +1,4 @@
-package cmd
+package budgettocmd
 
 import (
 	"context"
